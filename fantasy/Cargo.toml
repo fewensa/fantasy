@@ -1,0 +1,32 @@
+[package]
+name = "fantasy"
+version = "0.1.0"
+authors = ["fewensa <fewensa@protonmail.com>"]
+
+description = "Fantasy teelegram code generator"
+homepage = "https://github.com/fewensa/fantasy"
+repository = "https://github.com/fewensa/fantasy"
+license = "MIT"
+keywords = [ "fantasy", "codegen", "telegram"]
+categories = ["encoding"]
+include = [
+  "Cargo.toml",
+  "**/*.rs",
+  "README.md",
+  "LICENSE"
+]
+readme = "README.md"
+edition = "2018"
+
+
+[dependencies]
+
+text-reader = "0.2"
+rstring-builder = "0.1"
+toolkit = "0.1"
+
+case = "1.0.0"
+
+tera = "0.11.20"
+
+
