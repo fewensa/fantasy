@@ -1,5 +1,6 @@
-use std::fmt::Debug;
 use std::any::Any;
+use std::collections::HashMap;
+use std::fmt::Debug;
 
 /// tl trait
 #[derive(Debug, Clone, TypedBuilder)]
@@ -15,6 +16,38 @@ pub trait TLGrammar: Debug {
   fn start(&self) -> i32;
   fn end(&self) -> i32;
   fn token(&self) -> TLToken;
+}
+
+impl TLGrammar {
+  pub fn is_group(&self) -> bool {
+    match self.as_any().downcast_ref::<TLGroup>() {
+      Some(_) => true,
+      None => false,
+    }
+  }
+
+  pub fn is_paragraph(&self) -> bool {
+    match self.as_any().downcast_ref::<TLParagraph>() {
+      Some(_) => true,
+      None => false,
+    }
+  }
+
+  pub fn on_group<F: FnOnce(&TLGroup)>(&self, fnc: F) -> &Self {
+    match self.as_any().downcast_ref::<TLGroup>() {
+      Some(t) => fnc(t),
+      None => {},
+    };
+    self
+  }
+
+  pub fn on_paragraph<F: FnOnce(&TLParagraph)>(&self, fnc: F) -> &Self {
+    match self.as_any().downcast_ref::<TLParagraph>() {
+      Some(t) => fnc(t),
+      None => {},
+    };
+    self
+  }
 }
 
 
@@ -49,13 +82,13 @@ impl TLGrammar for TLParagraph {
 
   fn start(&self) -> i32 {
     match *self {
-      TLParagraph::Functions {start, end} => start
+      TLParagraph::Functions { start, end } => start
     }
   }
 
   fn end(&self) -> i32 {
     match *self {
-      TLParagraph::Functions {start, end} => end
+      TLParagraph::Functions { start, end } => end
     }
   }
 
@@ -68,7 +101,15 @@ impl TLGrammar for TLParagraph {
 #[derive(Debug, Clone, TypedBuilder)]
 pub struct TLGroupLine {
   pub(crate) line: i32,
+  pub(crate) token: TLGroupLineToken,
   pub(crate) text: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum TLGroupLineToken {
+  Trait,
+  Description,
+  Struct,
 }
 
 /// tl schema group
@@ -84,9 +125,41 @@ pub struct TLGroup {
 pub enum TLParagraph {
   Functions {
     start: i32,
-    end: i32
+    end: i32,
   }
 }
+
+/// token argument
+#[derive(Debug, Clone)]
+pub struct TLTokenArgType {
+  name: String,
+  components: Vec<TLTokenArgType>,
+}
+
+#[derive(Debug, Clone)]
+pub enum TLTokenGroupType {
+  Struct,
+  Trait,
+  Function,
+}
+
+/// tl schema token group
+#[derive(Debug, Clone)]
+pub struct TLTokenGroup {
+  /// all description, include trait/struct description and argument description
+  description: HashMap<String, String>,
+  /// trait/struct name
+  name: String,
+  /// trait/struct argument map
+  argument: HashMap<String, TLTokenArgType>,
+  /// token group type
+  type_: TLTokenGroupType,
+  /// when type is struct, blood is super type
+  ///      type is trait, blood is none
+  ///      type is function, blood is return type
+  blood: Option<String>,
+}
+
 
 
 
