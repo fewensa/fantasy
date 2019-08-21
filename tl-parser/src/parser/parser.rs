@@ -6,6 +6,7 @@ use failure::Error;
 use crate::errors;
 use crate::parser::group_parser;
 use crate::parser::tl;
+use crate::types::*;
 
 pub struct TLParser<P: AsRef<Path>> {
   path: P
@@ -16,7 +17,7 @@ impl<P: AsRef<Path>> TLParser<P> {
     Self { path }
   }
 
-  pub fn parse(&self) -> Result<(), Error> {
+  pub fn parse(&self) -> Result<Vec<TLTokenGroup>, Error> {
     let path = self.path.as_ref();
     if !path.exists() {
       return bail!("tl file not found -> {:?}", path);
@@ -31,11 +32,14 @@ impl<P: AsRef<Path>> TLParser<P> {
     let grammars = group_parser::parse(&tlbody)?;
     debug!("GROUPS: {:#?}", grammars);
 
+    debug!("Start parse token group");
     let tokens = tl::token_group(&grammars)?;
+//    debug!("TOKENS: {:#?}", tokens);
+    debug!("Parse token group finish");
 
     debug!("Parse tl schema group finish");
 
-    Ok(())
+    Ok(tokens)
   }
 }
 

@@ -15,7 +15,7 @@ pub trait TLGrammar: Debug {
   fn as_any(&self) -> &dyn Any;
   fn start(&self) -> i32;
   fn end(&self) -> i32;
-  fn token(&self) -> TLToken;
+  fn token(&self) -> TLTextToken;
 }
 
 impl TLGrammar {
@@ -48,11 +48,19 @@ impl TLGrammar {
     };
     self
   }
+
+  pub fn to_group(&self) -> Option<TLGroup> {
+    self.as_any().downcast_ref::<TLGroup>().map(|v| v.clone())
+  }
+
+  pub fn to_paragraph(&self) -> Option<TLParagraph> {
+    self.as_any().downcast_ref::<TLParagraph>().map(|v| v.clone())
+  }
 }
 
 
 #[derive(Debug, Clone)]
-pub enum TLToken {
+pub enum TLTextToken {
   Group,
   Paragraph,
 }
@@ -70,8 +78,8 @@ impl TLGrammar for TLGroup {
     self.end
   }
 
-  fn token(&self) -> TLToken {
-    TLToken::Group
+  fn token(&self) -> TLTextToken {
+    TLTextToken::Group
   }
 }
 
@@ -92,8 +100,8 @@ impl TLGrammar for TLParagraph {
     }
   }
 
-  fn token(&self) -> TLToken {
-    TLToken::Paragraph
+  fn token(&self) -> TLTextToken {
+    TLTextToken::Paragraph
   }
 }
 
@@ -130,10 +138,20 @@ pub enum TLParagraph {
 }
 
 /// token argument
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypedBuilder)]
 pub struct TLTokenArgType {
-  name: String,
-  components: Vec<TLTokenArgType>,
+  pub(crate) sign_name: String,
+  pub(crate) sign_type: String,
+  #[builder(default)]
+  pub(crate) description: Option<String>,
+  pub(crate) components: Vec<TLTokenComponentType>,
+}
+
+/// token component type
+#[derive(Debug, Clone, TypedBuilder)]
+pub struct TLTokenComponentType {
+  sign_type: String,
+  components: Vec<TLTokenComponentType>,
 }
 
 #[derive(Debug, Clone)]
@@ -144,20 +162,43 @@ pub enum TLTokenGroupType {
 }
 
 /// tl schema token group
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypedBuilder)]
 pub struct TLTokenGroup {
   /// all description, include trait/struct description and argument description
-  description: HashMap<String, String>,
+  pub(crate) description_all: Option<HashMap<String, String>>,
+  /// this group description
+  pub(crate) description: Option<String>,
   /// trait/struct name
-  name: String,
+  pub(crate) name: String,
   /// trait/struct argument map
-  argument: HashMap<String, TLTokenArgType>,
+  pub(crate) arguments: Vec<TLTokenArgType>,
   /// token group type
-  type_: TLTokenGroupType,
+  pub(crate) type_: TLTokenGroupType,
   /// when type is struct, blood is super type
   ///      type is trait, blood is none
   ///      type is function, blood is return type
-  blood: Option<String>,
+  pub(crate) blood: Option<String>,
+}
+
+impl TLTokenGroup {
+  pub fn description_all (&self) -> Option<HashMap<String, String>>{ self.description_all.clone() }
+  pub fn description     (&self) -> Option<String>                 { self.description    .clone() }
+  pub fn name            (&self) -> String                         { self.name           .clone() }
+  pub fn arguments       (&self) -> Vec<TLTokenArgType>            { self.arguments      .clone() }
+  pub fn type_           (&self) -> TLTokenGroupType               { self.type_          .clone() }
+  pub fn blood           (&self) -> Option<String>                 { self.blood          .clone() }
+}
+
+impl TLTokenArgType {
+  pub fn sign_name   (&self) -> String                     { self.sign_name  .clone() }
+  pub fn sign_type   (&self) -> String                     { self.sign_type  .clone() }
+  pub fn description (&self) -> Option<String>             { self.description.clone() }
+  pub fn components  (&self) -> Vec<TLTokenComponentType>  { self.components .clone() }
+}
+
+impl TLTokenComponentType {
+  pub fn sign_type   (&self) -> String                     { self.sign_type  .clone() }
+  pub fn components  (&self) -> Vec<TLTokenComponentType>  { self.components .clone() }
 }
 
 

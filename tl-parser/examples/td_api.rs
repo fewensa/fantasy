@@ -16,7 +16,10 @@ fn main() {
   let path = std::env::current_dir().unwrap().join("schema/master/td_api.tl");
   let parser = TLParser::new(path);
   match parser.parse() {
-    Ok(ret) => debug!("finish"),
+    Ok(tokens) => {
+      debug!("tokens: {:#?}", tokens);
+      debug!("finish");
+    },
     Err(e) => panic!("{:?}", e)
   }
 }
