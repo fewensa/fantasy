@@ -30,7 +30,7 @@ impl<P: AsRef<Path>> TLParser<P> {
     debug!("Start parse tl schema group");
 
     let grammars = group_parser::parse(&tlbody)?;
-    debug!("GROUPS: {:#?}", grammars);
+//    debug!("GROUPS: {:#?}", grammars);
 
     debug!("Start parse token group");
     let tokens = tl::token_group(&grammars)?;

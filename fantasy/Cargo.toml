@@ -27,9 +27,12 @@ text-reader = "0.2"
 rstring-builder = "0.1"
 toolkit = "0.1"
 
-getset = "0.0.7"
+typed-builder = "0.3.0"
 
+colored = "1.8"
 case = "1.0.0"
+
+lazy_static = "1.3"
 failure = "0.1.5"
 log = "0.4"
 simple_logger = "1.3"

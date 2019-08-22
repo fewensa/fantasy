@@ -25,8 +25,8 @@ serde_derive = "1"
 serde_json = "1"
 typetag = "0.1"
 
-strum = "0.15"
-strum_macros = "0.15"
+#strum = "0.15"
+#strum_macros = "0.15"
 
 text-reader = "0.2"
 rstring-builder = "0.1"

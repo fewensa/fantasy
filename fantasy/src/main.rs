@@ -1,32 +1,51 @@
 #[macro_use]
 extern crate failure;
 #[macro_use]
-extern crate getset;
+extern crate lazy_static;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate typed_builder;
 
-use std::{env, fs};
 use std::path::{Path, PathBuf};
 
-use config::Config;
+use tera::Tera;
+
+use cycle::*;
 use rtd::RTD;
 use tl_parser::parser::parser::TLParser;
+use tokenwrap::TokenWrap;
 
-mod config;
+mod cycle;
 mod rtd;
+mod tokenwrap;
 
 
 fn main() {
   simple_logger::init().unwrap();
   log::set_max_level(log::LevelFilter::Debug);
 
-//  let mut config = Config::default();
 
   let project_path = Path::new("./");
 
-  let path = project_path.join("schema/master/td_api.tl");
-  let tokens = TLParser::new(path).parse().unwrap();
+  let config: Config = Config::builder()
+    .path_rtd(project_path.join("../rtdlib"))
+    .path_telegram_client(project_path.join("../telegram-client"))
+    .path_template(project_path.join("template"))
+    .file_tl(project_path.join("schema/master/td_api.tl"))
+    .build();
 
-//  debug!("{:?} -> {}", path_rtd, path_rtd.exists());
-//  RTD::new(path_rtd, &tokens).generate().unwrap();
+  let mut tera = Tera::new("template/**/*").expect("Can not create Tera template engine.");
+  let renderer = Renderer::builder().tera(tera).build();
+
+  let tokens = TLParser::new(config.file_tl()).parse().unwrap();
+  let tknwrap = TokenWrap::new(tokens);
+
+  let cycle: Cycle = Cycle::builder()
+    .config(config)
+    .tknwrap(tknwrap)
+    .renderer(renderer)
+    .build();
+
+  RTD::new(&cycle).generate().unwrap();
 }
