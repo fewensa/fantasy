@@ -19,6 +19,6 @@ pub trait RObject {
 /// TDLib all class name mappers
 #[derive(Debug, Clone)]
 pub enum RTDType {
-  {% for item in common.clzs %}{{ item.name }},
-{% endfor %}
+  {% for item in all_types %}{{ item | to_camel}},
+  {% endfor %}
 }

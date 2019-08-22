@@ -5,6 +5,8 @@ extern crate lazy_static;
 #[macro_use]
 extern crate log;
 #[macro_use]
+extern crate serde_derive;
+#[macro_use]
 extern crate typed_builder;
 
 use std::path::{Path, PathBuf};
@@ -19,7 +21,7 @@ use tokenwrap::TokenWrap;
 mod cycle;
 mod rtd;
 mod tokenwrap;
-
+mod terafill;
 
 fn main() {
   simple_logger::init().unwrap();
@@ -36,6 +38,9 @@ fn main() {
     .build();
 
   let mut tera = Tera::new("template/**/*").expect("Can not create Tera template engine.");
+
+  terafill::filter(&mut tera);
+
   let renderer = Renderer::builder().tera(tera).build();
 
   let tokens = TLParser::new(config.file_tl()).parse().unwrap();

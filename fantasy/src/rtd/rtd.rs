@@ -68,30 +68,42 @@ impl<'a> RTD<'a> {
     self.copy_file_to(&template_src, &rtd_src)?;
 
     // generate common rs
-    self.gen_common(path_template)?;
+    self.gen_common()?;
 
-    self.gen_types(path_template)?;
+    self.gen_types()?;
 
     Ok(())
   }
 
   /// generate common rs file
-  fn gen_common<P: AsRef<Path>>(&self, path_template: P) -> Result<(), failure::Error> {
-    let path_template = path_template.as_ref();
+  fn gen_common(&self) -> Result<(), failure::Error> {
+    let config = self.cycle.config();
+    let tknwrap = self.cycle.tknwrap();
+
+    let mut context = Context::new();
+
+    let all_types = tknwrap.all_types();
+    context.insert("all_types", &all_types);
+
+    self.cycle.renderer().render("rtdlib/src/types/_common.rs",
+                                 config.path_rtd().join("_src/types/_common.rs"),
+                                 &context)?;
+    self.cycle.renderer().render("rtdlib/src/types/mod.rs",
+                                 config.path_rtd().join("_src/types/mod.rs"),
+                                 &context)?;
     Ok(())
   }
 
   /// generate types
-  fn gen_types<P: AsRef<Path>>(&self, path_template: P) -> Result<(), failure::Error> {
+  fn gen_types(&self) -> Result<(), failure::Error> {
     let config = self.cycle.config();
-
-    let path_template = path_template.as_ref();
     let tknwrap = self.cycle.tknwrap();
-    let rtd_src: PathBuf = config.path_rtd().join("_src");
 
     let mut context = Context::new();
     for td_type in tknwrap.all_types() {
-      self.cycle.renderer().render("rtdlib/src/types/td_type.rs", rtd_src.join(&format!("{}.rs", td_type.to_snake())[..]), &context)?;
+      self.cycle.renderer().render("rtdlib/src/types/td_type.rs",
+                                   config.path_rtd().join(&format!("_src/types/{}.rs", td_type.to_snake())[..]),
+                                   &context)?;
     }
     Ok(())
   }
