@@ -50,21 +50,24 @@ pub struct Renderer {
 }
 
 impl Renderer {
-  pub fn render<S: AsRef<str>, P: AsRef<Path>>(&self, tpl_file: S, write_to: P, context: &Context) -> Result<(), failure::Error> {
+  pub fn render<S: AsRef<str>, P: AsRef<Path>>(&self, tpl_file: S, write_to: P, context: &mut Context) -> Result<(), failure::Error> {
     let write_to = write_to.as_ref();
     let tpl_file = tpl_file.as_ref();
+
+    let mut first_write = false;
+    if !write_to.exists() {
+      let write_dir = write_to.parent();
+      if write_dir.is_none() { return bail!("Cant not get write dir"); }
+      let write_dir = write_dir.unwrap();
+      if !write_dir.exists() {
+        std::fs::create_dir_all(write_dir)?;
+      }
+      first_write = true;
+    }
+    context.insert("first_write", &first_write);
+
     match self.tera.render(tpl_file.as_ref(), context) {
       Ok(body) => {
-        if write_to.exists() {
-          std::fs::remove_file(write_to);
-        } else {
-          let write_dir = write_to.parent();
-          if write_dir.is_none() { return bail!("Cant not get write dir"); }
-          let write_dir = write_dir.unwrap();
-          if !write_dir.exists() {
-            std::fs::create_dir_all(write_dir)?;
-          }
-        }
         debug!("USE TEMPLATE [{}] WRITE TO [{}]", tpl_file.blue(), write_to.to_str().map_or("", |v| v).blue());
         toolkit::fs::append(write_to, body)?;
         Ok(())

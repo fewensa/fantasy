@@ -9,6 +9,5 @@ extern crate strum_macros;
 
 pub mod tdjson;
 pub mod types;
-pub mod tdkit;
 
 //mod tdsupplement;

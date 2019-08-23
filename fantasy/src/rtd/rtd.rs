@@ -28,10 +28,18 @@ impl<'a> RTD<'a> {
       return bail!("RTD template path is not dir -> {:?}", path_template);
     }
 
+    self.clearance();
+
     // move root path file
     self.copy_file_to(&path_template, config.path_rtd())?;
     // generate src file
     self.gen_src(&path_template)?;
+    Ok(())
+  }
+
+  fn clearance(&self) -> Result<(), failure::Error> {
+    let base_dir = self.cycle.config().path_rtd();
+    std::fs::remove_dir_all(base_dir.join("_src"))?;
     Ok(())
   }
 
@@ -87,10 +95,10 @@ impl<'a> RTD<'a> {
 
     self.cycle.renderer().render("rtdlib/src/types/_common.rs",
                                  config.path_rtd().join("_src/types/_common.rs"),
-                                 &context)?;
+                                 &mut context)?;
     self.cycle.renderer().render("rtdlib/src/types/mod.rs",
                                  config.path_rtd().join("_src/types/mod.rs"),
-                                 &context)?;
+                                 &mut context)?;
     Ok(())
   }
 
@@ -100,10 +108,14 @@ impl<'a> RTD<'a> {
     let tknwrap = self.cycle.tknwrap();
 
     let mut context = Context::new();
-    for td_type in tknwrap.all_types() {
+    let tokens = tknwrap.tokens();
+    for token in tokens {
+      if tknwrap.is_skip_type(token.name()) { continue }
+      let file_name = tknwrap.which_file(token.name());
+      context.insert("token", token);
       self.cycle.renderer().render("rtdlib/src/types/td_type.rs",
-                                   config.path_rtd().join(&format!("_src/types/{}.rs", td_type.to_snake())[..]),
-                                   &context)?;
+                                   config.path_rtd().join(&format!("_src/types/{}.rs", file_name)[..]),
+                                   &mut context)?;
     }
     Ok(())
   }

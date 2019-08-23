@@ -4,6 +4,9 @@ extern crate failure;
 extern crate log;
 #[macro_use]
 extern crate typed_builder;
+#[macro_use]
+extern crate serde_derive;
+
 
 mod errors;
 

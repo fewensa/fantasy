@@ -7,6 +7,7 @@ use tera::Tera;
 
 pub fn filter(tera: &mut Tera) -> Result<(), failure::Error> {
   self::add_filter_case(tera)?;
+  self::add_filter_safe(tera)?;
   Ok(())
 }
 
@@ -49,3 +50,18 @@ pub fn add_filter_case(tera: &mut Tera) -> Result<(), failure::Error> {
   tera.register_filter("to_capitalized", case_to_capitalized);
   Ok(())
 }
+
+pub fn add_filter_safe(tera: &mut Tera) -> Result<(), failure::Error> {
+  fn safe_field(value: Value, arg: HashMap<String, Value>) -> tera::Result<Value> {
+    match value.as_str() {
+      Some(text) => match text {
+        "type" => Ok(serde_json::value::to_value("type_".to_string()).unwrap()),
+        _ => Ok(serde_json::value::to_value(text.to_snake()).unwrap())
+      },
+      None => Err(tera::Error::from(serde_json::Error::custom(format!("Error value {:?}", value))))
+    }
+  }
+  tera.register_filter("safe_field", safe_field);
+  Ok(())
+}
+
