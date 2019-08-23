@@ -1,5 +1,12 @@
+#[macro_use]
+extern crate serde_derive;
 
+use serde::{Serialize, Serializer};
+use serde::de::{Deserialize, Deserializer};
 
+// , Serialize
+#[derive(Debug, Clone)]
+//#[serde(tag = "@type", content = "c")]
 pub enum UpdateAuthorizationState {
   Closed             (AuthorizationStateClosed               ),
   Closing            (AuthorizationStateClosing              ),
@@ -12,29 +19,54 @@ pub enum UpdateAuthorizationState {
   WaitTdlibParameters(AuthorizationStateWaitTdlibParameters  ),
 }
 
-pub struct AuthorizationStateClosed {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationStateClosed {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
+}
 
-pub struct AuthorizationStateClosing {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationStateClosing {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
+}
 
-pub struct AuthorizationStateLoggingOut {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationStateLoggingOut {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
+}
 
-pub struct AuthorizationStateReady {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationStateReady {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
+}
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthorizationStateWaitCode {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// True, if the user is already registered.
   is_registered: Option<bool>,
-  /// Telegram terms of service, which should be accepted before user can continue registration; may be null.
-  terms_of_service: Option<TermsOfService>,
+//  /// Telegram terms of service, which should be accepted before user can continue registration; may be null.
+//  terms_of_service: Option<TermsOfService>,
   /// Information about the authorization code that was sent.
   code_info: Option<AuthenticationCodeInfo>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthorizationStateWaitEncryptionKey {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// True, if the database is currently encrypted.
-  is_encrypted: Option<bool>,
+  is_encrypted: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthorizationStateWaitPassword {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// Hint for the password; may be empty.
   password_hint: Option<String>,
   /// True if a recovery email address has been set up.
@@ -44,11 +76,22 @@ pub struct AuthorizationStateWaitPassword {
 
 }
 
-pub struct AuthorizationStateWaitPhoneNumber {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationStateWaitPhoneNumber {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
+}
 
-pub struct AuthorizationStateWaitTdlibParameters {}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AuthorizationStateWaitTdlibParameters {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
+}
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationCodeInfo {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// A phone number that is being authenticated.
   phone_number: String,
   /// Describes the way the code was sent to the user.
@@ -59,6 +102,7 @@ pub struct AuthenticationCodeInfo {
   timeout: i32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AuthenticationCodeType {
   TypeCall             (AuthenticationCodeTypeCall            ),
   TypeFlashCall        (AuthenticationCodeTypeFlashCall       ),
@@ -66,32 +110,183 @@ pub enum AuthenticationCodeType {
   TypeTelegramMessage  (AuthenticationCodeTypeTelegramMessage ),
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationCodeTypeCall {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// Length of the code.
   length: i32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationCodeTypeFlashCall {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// Pattern of the phone number from which the call will be made.
   pattern: String,
 
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationCodeTypeSms {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// Length of the code.
   length: i32,
 
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationCodeTypeTelegramMessage {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
   /// Length of the code.
   length: i32,
 }
 
+
+macro_rules! rtd_enum_deserialize {
+  ($field:ident, $type_name:ident, $(($td_name:ident, $enum_item:ident));*;) => {
+    // example json
+    // {"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitEncryptionKey","is_encrypted":false}}
+    |deserializer: D| -> Result<$type_name, D::Error> {
+      let raw: serde_json::Value = Deserialize::deserialize(deserializer)?;
+      // get trait json value
+      // rtd_trait_value = {"@type":"authorizationStateWaitEncryptionKey","is_encrypted":false}
+      let rtd_trait_value = match raw.get(stringify!($field)) {
+        Some(value) => value,
+        None => return Err(D::Error::missing_field(stringify!($field)))
+      };
+      // the `rtd_trait_value` variable type is &serde_json::Value, tdlib trait will return a object, convert this type to object `&Map<String, Value>`
+      let rtd_trait_map = match rtd_trait_value.as_object() {
+        Some(map) => map,
+        None => return Err(D::Error::unknown_field(stringify!($field), &[stringify!("{} is not the correct type", $field)])) // &format!("{} is not the correct type", stringify!($field))[..]
+      };
+      // get `@type` value, detect specific types
+      let rtd_trait_type = match rtd_trait_map.get("@type") {
+        // the `t` variable type is `serde_json::Value`, convert `t` to str
+        Some(t) => match t.as_str() {
+          Some(s) => s,
+          None => return Err(D::Error::unknown_field(stringify!("{} -> @type", $field), &[stringify!("{} -> @type is not the correct type", $field)])) // &format!("{} -> @type is not the correct type", stringify!($field))[..]
+        },
+        None => return Err(D::Error::missing_field(stringify!("{} -> @type", $field)))
+      };
+
+      let obj = match rtd_trait_type {
+        $(
+          stringify!($td_name) => $type_name::$enum_item(match serde_json::from_value(rtd_trait_value.clone()) {
+            Ok(t) => t,
+            Err(e) => return Err(D::Error::unknown_field(stringify!("{} can't deserialize to {}::{}", $td_name, $type_name, $enum_item, e), &[stringify!("{:?}", e)]))
+          }),
+        )*
+        _ => return Err(D::Error::missing_field(stringify!($field)))
+      };
+      Ok(obj)
+    }
+  }
+}
+
+impl<'de> Deserialize<'de> for UpdateAuthorizationState {
+  fn deserialize<D>(deserializer: D) -> Result<UpdateAuthorizationState, D::Error> where D: Deserializer<'de> {
+
+    use serde::de::Error;
+
+    rtd_enum_deserialize!(
+      authorization_state,
+      UpdateAuthorizationState,
+      (authorizationStateWaitTdlibParameters, WaitTdlibParameters);
+      (authorizationStateWaitEncryptionKey  , WaitEncryptionKey  );
+    )(deserializer)
+
+    // test code
+
+////    Err(D::Error::unknown_field("authorization_state", &["field fail"]))
+//
+//    let raw: serde_json::Value = Deserialize::deserialize(deserializer)?;
+//    let authorization_state_value = match raw.get("authorization_state") {
+//      Some(t) => t,
+//      None => return Err(D::Error::missing_field("authorization_state"))
+//    };
+//    let authorization_state = match authorization_state_value.as_object() {
+//      Some(t) => t,
+//      None => return Err(D::Error::unknown_field("authorization_state", &["field fail"]))
+//    };
+//    let aut_type = match authorization_state.get("@type") {
+//      Some(t) => t,
+//      None => return Err(D::Error::missing_field("authorization_state -> @type"))
+//    };
+//    let aut_type = match aut_type.as_str() {
+//      Some(t) => t,
+//      None => return Err(D::Error::unknown_field("authorization_state", &["field fail"]))
+//    };
+//    let uas = match aut_type {
+//      "authorizationStateWaitTdlibParameters" => {
+//        UpdateAuthorizationState::WaitTdlibParameters(match serde_json::from_value(authorization_state_value.clone()) {
+//          Ok(t) => t,
+//          Err(e) => return Err(D::Error::unknown_field("authorization_state", &["field fail"]))
+//        })
+//      },
+//      "authorizationStateWaitEncryptionKey" => {
+//        UpdateAuthorizationState::WaitEncryptionKey(match serde_json::from_value(authorization_state_value.clone()) {
+//          Ok(t) => t,
+//          Err(e) => return Err(D::Error::unknown_field("authorization_state", &["field fail"]))
+//        })
+//      },
+//      _ => return Err(D::Error::missing_field("authorization_state"))
+//    };
+//    Ok(uas)
+  }
+}
+
+
+macro_rules! rtd_enum_serialize {
+  ($trait_key:ident, $td_name:ident, $type_name:ident, $($enum_item:ident);*;) => {
+    |td_enum: &$type_name, serializer: S| -> Result<S::Ok, S::Error> {
+      let mut state = serializer.serialize_map(Some(2))?;
+      state.serialize_entry("@type", stringify!($td_name))?;
+      state.serialize_key(stringify!($trait_key))?;
+      match td_enum {
+        $(
+          $type_name::$enum_item(t) => state.serialize_value(t)?,
+        )*
+        _ => return Err(S::Error::custom("Not support now"))
+      }
+      state.end()
+    }
+  }
+}
+
+impl Serialize for UpdateAuthorizationState {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    use serde::ser::{SerializeMap, Error};
+
+    rtd_enum_serialize!(
+      authorization_state,
+      updateAuthorizationState,
+      UpdateAuthorizationState,
+      WaitTdlibParameters;
+      WaitEncryptionKey;
+    )(self, serializer)
+
+//    let mut state = serializer.serialize_map(Some(2))?;
+//    state.serialize_entry("@type", "updateAuthorizationState")?;
+//    state.serialize_key("authorization_state")?;
+//    match self {
+//      UpdateAuthorizationState::WaitTdlibParameters(t) => state.serialize_value(t)?,
+//      UpdateAuthorizationState::WaitEncryptionKey(t) => state.serialize_value(t)?,
+//      _ => return Err(S::Error::custom("Not support now"))
+//    }
+//    state.end()
+  }
+}
 
 
 #[test]
 fn test_authorization_state() {
-  let json = r#"{"@type":"updateAuthorizationState","@struct":"UpdateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitTdlibParameters","@struct":"AuthorizationStateWaitTdlibParameters"}}"#;
-
+  let json = r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitEncryptionKey","is_encrypted":false}}"#;
+  let authorization_stat: UpdateAuthorizationState = serde_json::from_str(json).unwrap();
+  let aut = serde_json::to_string(&authorization_stat);
+//  println!("{:?}", aut);
+  assert!(aut.is_ok(), true);
+  assert_eq!(aut.unwrap(), json);
 }
