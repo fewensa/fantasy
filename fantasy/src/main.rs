@@ -22,6 +22,8 @@ mod cycle;
 mod rtd;
 mod tokenwrap;
 mod terafill;
+mod types;
+mod tdfill;
 
 fn main() {
   simple_logger::init().unwrap();
@@ -29,6 +31,8 @@ fn main() {
 
 
   let project_path = Path::new("./");
+
+  let tdtypefill = tdfill::TDTypeFill::new(project_path.join("schema/td_type_fill.toml")).unwrap();
 
   let config: Config = Config::builder()
     .path_rtd(project_path.join("../rtdlib"))
@@ -39,12 +43,12 @@ fn main() {
 
   let mut tera = Tera::new("template/**/*").expect("Can not create Tera template engine.");
 
-  terafill::filter(&mut tera);
+  terafill::fill(&mut tera, tdtypefill.clone());
 
   let renderer = Renderer::builder().tera(tera).build();
 
   let tokens = TLParser::new(config.file_tl()).parse().unwrap();
-  let tknwrap = TokenWrap::new(tokens);
+  let tknwrap = TokenWrap::new(tokens, tdtypefill.clone());
 
   let cycle: Cycle = Cycle::builder()
     .config(config)

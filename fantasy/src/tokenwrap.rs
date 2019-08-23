@@ -2,6 +2,8 @@ use case::CaseExt;
 
 use tl_parser::types::*;
 
+use crate::tdfill::TDTypeFill;
+
 lazy_static! {
   static ref SKIP_TYPES: Vec<&'static str> = {
     vec![
@@ -20,12 +22,13 @@ lazy_static! {
 
 #[derive(Debug)]
 pub struct TokenWrap {
-  tokens: Vec<TLTokenGroup>
+  tokens: Vec<TLTokenGroup>,
+  tdtypefill: TDTypeFill
 }
 
 impl TokenWrap {
-  pub fn new(tokens: Vec<TLTokenGroup>) -> Self {
-    Self { tokens }
+  pub fn new(tokens: Vec<TLTokenGroup>, tdtypefill: TDTypeFill) -> Self {
+    Self { tokens, tdtypefill }
   }
 
   pub fn tokens(&self) -> &Vec<TLTokenGroup> {
