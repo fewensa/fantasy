@@ -4,10 +4,16 @@ extern crate serde_derive;
 use serde::{Serialize, Serializer};
 use serde::de::{Deserialize, Deserializer};
 
-// , Serialize
-#[derive(Debug, Clone)]
-//#[serde(tag = "@type", content = "c")]
-pub enum UpdateAuthorizationState {
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateAuthorizationState {
+  #[serde(rename(serialize = "@type", deserialize = "@type"))]
+  td_name: String,
+  authorization_state: AuthorizationState,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(untagged)]
+pub enum AuthorizationState {
   Closed             (AuthorizationStateClosed               ),
   Closing            (AuthorizationStateClosing              ),
   LoggingOut         (AuthorizationStateLoggingOut           ),
@@ -146,28 +152,22 @@ pub struct AuthenticationCodeTypeTelegramMessage {
 
 
 macro_rules! rtd_enum_deserialize {
-  ($field:ident, $type_name:ident, $(($td_name:ident, $enum_item:ident));*;) => {
+  ($type_name:ident, $(($td_name:ident, $enum_item:ident));*;) => {
     // example json
-    // {"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitEncryptionKey","is_encrypted":false}}
+    // {"@type":"authorizationStateWaitEncryptionKey","is_encrypted":false}
     |deserializer: D| -> Result<$type_name, D::Error> {
-      let raw: serde_json::Value = Deserialize::deserialize(deserializer)?;
-      // get trait json value
-      // rtd_trait_value = {"@type":"authorizationStateWaitEncryptionKey","is_encrypted":false}
-      let rtd_trait_value = match raw.get(stringify!($field)) {
-        Some(value) => value,
-        None => return Err(D::Error::missing_field(stringify!($field)))
-      };
+      let rtd_trait_value: serde_json::Value = Deserialize::deserialize(deserializer)?;
       // the `rtd_trait_value` variable type is &serde_json::Value, tdlib trait will return a object, convert this type to object `&Map<String, Value>`
       let rtd_trait_map = match rtd_trait_value.as_object() {
         Some(map) => map,
-        None => return Err(D::Error::unknown_field(stringify!($field), &[stringify!("{} is not the correct type", $field)])) // &format!("{} is not the correct type", stringify!($field))[..]
+        None => return Err(D::Error::unknown_field(stringify!($type_name), &[stringify!("{} is not the correct type", $type_name)])) // &format!("{} is not the correct type", stringify!($field))[..]
       };
       // get `@type` value, detect specific types
       let rtd_trait_type = match rtd_trait_map.get("@type") {
         // the `t` variable type is `serde_json::Value`, convert `t` to str
         Some(t) => match t.as_str() {
           Some(s) => s,
-          None => return Err(D::Error::unknown_field(stringify!("{} -> @type", $field), &[stringify!("{} -> @type is not the correct type", $field)])) // &format!("{} -> @type is not the correct type", stringify!($field))[..]
+          None => return Err(D::Error::unknown_field(stringify!("{} -> @type", $field), &[stringify!("{} -> @type is not the correct type", $type_name)])) // &format!("{} -> @type is not the correct type", stringify!($field))[..]
         },
         None => return Err(D::Error::missing_field(stringify!("{} -> @type", $field)))
       };
@@ -186,14 +186,13 @@ macro_rules! rtd_enum_deserialize {
   }
 }
 
-impl<'de> Deserialize<'de> for UpdateAuthorizationState {
-  fn deserialize<D>(deserializer: D) -> Result<UpdateAuthorizationState, D::Error> where D: Deserializer<'de> {
+impl<'de> Deserialize<'de> for AuthorizationState {
+  fn deserialize<D>(deserializer: D) -> Result<AuthorizationState, D::Error> where D: Deserializer<'de> {
 
     use serde::de::Error;
 
     rtd_enum_deserialize!(
-      authorization_state,
-      UpdateAuthorizationState,
+      AuthorizationState,
       (authorizationStateWaitTdlibParameters, WaitTdlibParameters);
       (authorizationStateWaitEncryptionKey  , WaitEncryptionKey  );
     )(deserializer)
@@ -202,11 +201,7 @@ impl<'de> Deserialize<'de> for UpdateAuthorizationState {
 
 ////    Err(D::Error::unknown_field("authorization_state", &["field fail"]))
 //
-//    let raw: serde_json::Value = Deserialize::deserialize(deserializer)?;
-//    let authorization_state_value = match raw.get("authorization_state") {
-//      Some(t) => t,
-//      None => return Err(D::Error::missing_field("authorization_state"))
-//    };
+//    let authorization_state_value: serde_json::Value = Deserialize::deserialize(deserializer)?;
 //    let authorization_state = match authorization_state_value.as_object() {
 //      Some(t) => t,
 //      None => return Err(D::Error::unknown_field("authorization_state", &["field fail"]))
@@ -221,13 +216,13 @@ impl<'de> Deserialize<'de> for UpdateAuthorizationState {
 //    };
 //    let uas = match aut_type {
 //      "authorizationStateWaitTdlibParameters" => {
-//        UpdateAuthorizationState::WaitTdlibParameters(match serde_json::from_value(authorization_state_value.clone()) {
+//        AuthorizationState::WaitTdlibParameters(match serde_json::from_value(authorization_state_value.clone()) {
 //          Ok(t) => t,
 //          Err(e) => return Err(D::Error::unknown_field("authorization_state", &["field fail"]))
 //        })
 //      },
 //      "authorizationStateWaitEncryptionKey" => {
-//        UpdateAuthorizationState::WaitEncryptionKey(match serde_json::from_value(authorization_state_value.clone()) {
+//        AuthorizationState::WaitEncryptionKey(match serde_json::from_value(authorization_state_value.clone()) {
 //          Ok(t) => t,
 //          Err(e) => return Err(D::Error::unknown_field("authorization_state", &["field fail"]))
 //        })
@@ -239,54 +234,13 @@ impl<'de> Deserialize<'de> for UpdateAuthorizationState {
 }
 
 
-macro_rules! rtd_enum_serialize {
-  ($trait_key:ident, $td_name:ident, $type_name:ident, $($enum_item:ident);*;) => {
-    |td_enum: &$type_name, serializer: S| -> Result<S::Ok, S::Error> {
-      let mut state = serializer.serialize_map(Some(2))?;
-      state.serialize_entry("@type", stringify!($td_name))?;
-      state.serialize_key(stringify!($trait_key))?;
-      match td_enum {
-        $(
-          $type_name::$enum_item(t) => state.serialize_value(t)?,
-        )*
-        _ => return Err(S::Error::custom("Not support now"))
-      }
-      state.end()
-    }
-  }
-}
-
-impl Serialize for UpdateAuthorizationState {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-    use serde::ser::{SerializeMap, Error};
-
-    rtd_enum_serialize!(
-      authorization_state,
-      updateAuthorizationState,
-      UpdateAuthorizationState,
-      WaitTdlibParameters;
-      WaitEncryptionKey;
-    )(self, serializer)
-
-//    let mut state = serializer.serialize_map(Some(2))?;
-//    state.serialize_entry("@type", "updateAuthorizationState")?;
-//    state.serialize_key("authorization_state")?;
-//    match self {
-//      UpdateAuthorizationState::WaitTdlibParameters(t) => state.serialize_value(t)?,
-//      UpdateAuthorizationState::WaitEncryptionKey(t) => state.serialize_value(t)?,
-//      _ => return Err(S::Error::custom("Not support now"))
-//    }
-//    state.end()
-  }
-}
-
 
 #[test]
 fn test_authorization_state() {
   let json = r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitEncryptionKey","is_encrypted":false}}"#;
-  let authorization_stat: UpdateAuthorizationState = serde_json::from_str(json).unwrap();
-  let aut = serde_json::to_string(&authorization_stat);
-//  println!("{:?}", aut);
+  let update_authorization_stat: UpdateAuthorizationState = serde_json::from_str(json).unwrap();
+  let aut = serde_json::to_string(&update_authorization_stat);
+  println!("{:?}", aut);
   assert!(aut.is_ok(), true);
   assert_eq!(aut.unwrap(), json);
 }
