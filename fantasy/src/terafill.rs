@@ -196,7 +196,7 @@ fn add_td_fnc(tera: &mut Tera, tknwrap: TokenWrap) -> Result<(), failure::Error>
     let is = match type_ {
       "i8" | "i16" | "i32" | "i64" | "i128" | "isize" |
       "u8" | "u16" | "u32" | "u64" | "u128" | "usize" |
-      "f32" | "f64" |
+      "f32" | "f64" | "str" |
       "bool" => true,
       _ => false
     };
@@ -216,11 +216,31 @@ fn add_td_fnc(tera: &mut Tera, tknwrap: TokenWrap) -> Result<(), failure::Error>
     Ok(serde_json::value::to_value(is).unwrap())
   });
 
+  let is_builder_ref = Box::new(|argument: HashMap<String, Value>| -> tera::Result<Value> {
+    let type_ = match argument.get("type_") {
+      Some(t) => match t.as_str() {
+        Some(n) => n,
+        None => return Err("Can't get target".into())
+      },
+      None => return Err("Lose target".into())
+    };
+    if type_.to_lowercase().starts_with("vec") { return Ok(serde_json::value::to_value(false).unwrap()) }
+    let is = match type_ {
+      "i8" | "i16" | "i32" | "i64" | "i128" | "isize" |
+      "u8" | "u16" | "u32" | "u64" | "u128" | "usize" |
+      "f32" | "f64" | "str" |
+      "bool" => false,
+      _ => true
+    };
+    Ok(serde_json::value::to_value(is).unwrap())
+  });
+
   tera.register_function("td_arg", td_arg);
   tera.register_function("sub_tokens", sub_tokens);
   tera.register_function("find_token", find_token);
   tera.register_function("is_primitive", is_primitive);
   tera.register_function("is_optional", is_optional);
+  tera.register_function("is_builder_ref", is_builder_ref);
   Ok(())
 }
 
