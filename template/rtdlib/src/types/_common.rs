@@ -28,7 +28,7 @@ macro_rules! rtd_enum_deserialize {
         $(
           stringify!($td_name) => $type_name::$enum_item(match serde_json::from_value(rtd_trait_value.clone()) {
             Ok(t) => t,
-            Err(e) => return Err(D::Error::unknown_field(stringify!("{} can't deserialize to {}::{}", $td_name, $type_name, $enum_item, e), &[stringify!("{:?}", e)]))
+            Err(_e) => return Err(D::Error::unknown_field(stringify!("{} can't deserialize to {}::{}", $td_name, $type_name, $enum_item, _e), &[stringify!("{:?}", _e)]))
           }),
         )*
         _ => return Err(D::Error::missing_field(stringify!($field)))

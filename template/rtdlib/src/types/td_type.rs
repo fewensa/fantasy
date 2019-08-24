@@ -1,12 +1,11 @@
 {% if first_write %}
-use std::fmt::Debug;
-
 use crate::types::*;
 use crate::errors::*;
 {% endif %}
 
 {% if token.type_ == "Trait" %}
 {% if first_write %}
+use std::fmt::Debug;
 use serde::de::{Deserialize, Deserializer};
 {% endif %}
 

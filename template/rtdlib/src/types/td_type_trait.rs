@@ -33,7 +33,7 @@ impl RObject for {{trait_name}} {
 }
 
 impl {{trait_name}} {
-  #[doc(hidden)] pub fn _is_default(&self) -> bool { tuple_enum_is!({{trait_name}}, _Default)(self) }
+  #[doc(hidden)] pub fn _is_default(&self) -> bool { if let {{trait_name}}::_Default(_) = self { true } else { false } }
 
 {% for subt in sub_tokens(token=token) %}  pub fn is_{{subt.name | td_enum_item_name(token=token) | to_snake}}(&self) -> bool { if let {{trait_name}}::{{subt.name | td_enum_item_name(token=token)}}(_) = self { true } else { false } }
 {% endfor %}
