@@ -43,12 +43,13 @@ fn main() {
 
   let mut tera = Tera::new("template/**/*").expect("Can not create Tera template engine.");
 
-  terafill::fill(&mut tera, tdtypefill.clone());
+  let tokens = TLParser::new(config.file_tl()).parse().unwrap();
+  let tknwrap = TokenWrap::new(tokens, tdtypefill.clone());
+
+  terafill::fill(&mut tera, tknwrap.clone());
 
   let renderer = Renderer::builder().tera(tera).build();
 
-  let tokens = TLParser::new(config.file_tl()).parse().unwrap();
-  let tknwrap = TokenWrap::new(tokens, tdtypefill.clone());
 
   let cycle: Cycle = Cycle::builder()
     .config(config)

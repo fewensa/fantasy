@@ -9,11 +9,12 @@ use tera::Tera;
 use tl_parser::types::{TLTokenArgType, TLTokenComponentType, TLTokenGroup};
 
 use crate::tdfill::TDTypeFill;
+use crate::tokenwrap::TokenWrap;
 
-pub fn fill(tera: &mut Tera, tdtypefill: TDTypeFill) -> Result<(), failure::Error> {
+pub fn fill(tera: &mut Tera, tknwrap: TokenWrap) -> Result<(), failure::Error> {
   self::add_filter_case(tera)?;
-  self::add_filter_safe(tera)?;
-  self::add_td_fnc(tera, tdtypefill.clone())?;
+  self::add_filter_td(tera)?;
+  self::add_td_fnc(tera, tknwrap)?;
   Ok(())
 }
 
@@ -49,6 +50,7 @@ fn add_filter_case(tera: &mut Tera) -> Result<(), failure::Error> {
       None => Err(format!("Error value {:?}", value).into())
     }
   }
+//  fn case_to
   tera.register_filter("to_snake", case_to_snake_filter);
   tera.register_filter("to_camel", case_to_camel);
   tera.register_filter("to_camel_lowercase", case_to_camel_lowercase);
@@ -57,8 +59,8 @@ fn add_filter_case(tera: &mut Tera) -> Result<(), failure::Error> {
   Ok(())
 }
 
-fn add_filter_safe(tera: &mut Tera) -> Result<(), failure::Error> {
-  fn safe_field(value: Value, arg: HashMap<String, Value>) -> tera::Result<Value> {
+fn add_filter_td(tera: &mut Tera) -> Result<(), failure::Error> {
+  fn td_safe_field(value: Value, arg: HashMap<String, Value>) -> tera::Result<Value> {
     match value.as_str() {
       Some(text) => match text {
         "type" => Ok(serde_json::value::to_value("type_".to_string()).unwrap()),
@@ -67,14 +69,49 @@ fn add_filter_safe(tera: &mut Tera) -> Result<(), failure::Error> {
       None => Err(format!("Error value {:?}", value).into())
     }
   }
-  tera.register_filter("safe_field", safe_field);
+
+  fn td_enum_item_name(value: Value, arg: HashMap<String, Value>) -> tera::Result<Value> {
+    let token: TLTokenGroup = match arg.get("token") {
+      Some(t) => match serde_json::from_value(t.clone()) {
+        Ok(a) => a,
+        Err(e) => return Err("Can't covert token to TLTokenGroup".into())
+      },
+      None => return Err("Can't found token".into())
+    };
+    match value.as_str() {
+      Some(text) => {
+        let token_name = token.name();
+        let plura_token_name = format!("{}s", token_name);
+        if plura_token_name.to_lowercase() == text.to_lowercase() {
+          return Ok(serde_json::value::to_value(text.to_camel()).unwrap());
+        }
+
+        let item_name = text.to_camel().replace(&token_name[..], "");
+        Ok(serde_json::value::to_value(item_name).unwrap())
+
+//        let token_chars = token_name.chars().collect::<Vec<char>>();
+//        let text_chars = text.to_camel().chars().collect::<Vec<char>>();
+//        let item_name = text.to_camel().chars().skip(token_chars.len()).take(text_chars.len()).collect::<String>();
+//        Ok(serde_json::value::to_value(item_name).unwrap())
+      }
+      None => Err(format!("Error value {:?}", value).into())
+    }
+  }
+
+  tera.register_filter("td_safe_field", td_safe_field);
+  tera.register_filter("td_enum_item_name", td_enum_item_name);
   Ok(())
 }
 
-fn add_td_fnc(tera: &mut Tera, tdtypefill: TDTypeFill) -> Result<(), failure::Error> {
+fn add_td_fnc(tera: &mut Tera, tknwrap: TokenWrap) -> Result<(), failure::Error> {
+  let tknwrap0 = tknwrap.clone();
+  let tknwrap1 = tknwrap.clone();
+  let tknwrap2 = tknwrap.clone();
 
   // argument type
   let td_arg = Box::new(move |argument: HashMap<String, Value>| -> tera::Result<Value> {
+    let tdtypefill = tknwrap0.tdtypefill();
+
     let token: TLTokenGroup = match argument.get("token") {
       Some(t) => match serde_json::from_value(t.clone()) {
         Ok(a) => a,
@@ -89,6 +126,13 @@ fn add_td_fnc(tera: &mut Tera, tdtypefill: TDTypeFill) -> Result<(), failure::Er
       },
       None => return Err("Can't found arg".into())
     };
+    let builder_arg = match argument.get("builder_arg") {
+      Some(t) => match t.as_bool() {
+        Some(t) => t,
+        None => false,
+      },
+      None => false
+    };
     let mut arg_type = tdtypefill.mapper(arg.sign_type()).map_or(arg.sign_type().to_camel(), |v| v);
     let components = arg.components();
     if !components.is_empty() {
@@ -97,12 +141,86 @@ fn add_td_fnc(tera: &mut Tera, tdtypefill: TDTypeFill) -> Result<(), failure::Er
     }
 
     arg_type = tdtypefill.td_filter_type(token.name(), arg.sign_name(), arg_type);
+    if !builder_arg && tknwrap0.is_optional_arg(&token, &arg) {
+      arg_type = format!("Option<{}>", arg_type);
+    }
 
     Ok(serde_json::value::to_value(arg_type).unwrap())
   });
 
+  // all sub tokens
+  let sub_tokens = Box::new(move |argument: HashMap<String, Value>| -> tera::Result<Value> {
+    let token: TLTokenGroup = match argument.get("token") {
+      Some(t) => match serde_json::from_value(t.clone()) {
+        Ok(a) => a,
+        Err(e) => return Err("Can't covert token to TLTokenGroup".into())
+      },
+      None => return Err("Can't found token".into())
+    };
+
+    let sub_tokens: Vec<&TLTokenGroup> = tknwrap1.tokens()
+      .iter()
+      .filter(|&v| v.blood().is_some())
+      .filter(|v| v.blood().unwrap().to_lowercase() == token.name().to_lowercase() && v.name().to_lowercase() != token.name().to_lowercase())
+      .collect();
+
+    Ok(serde_json::value::to_value(sub_tokens).unwrap())
+  });
+
+  let find_token = Box::new(move |argument: HashMap<String, Value>| -> tera::Result<Value> {
+    let token_name = match argument.get("token_name") {
+      Some(t) => match t.as_str() {
+        Some(n) => n,
+        None => return Err("Can't get token name".into())
+      },
+      None => return Err("Lose token name".into())
+    };
+    let token = match tknwrap2.tokens()
+      .iter()
+      .find(|&v| v.name().to_lowercase() == token_name.to_lowercase()) {
+      Some(t) => t,
+      None => return Err(format!("Can't find token by this token_name => {}", token_name).into())
+    };
+    Ok(serde_json::value::to_value(token).unwrap())
+  });
+
+  // type is primitive
+  let is_primitive = Box::new(|argument: HashMap<String, Value>| -> tera::Result<Value> {
+    let type_ = match argument.get("type_") {
+      Some(t) => match t.as_str() {
+        Some(n) => n,
+        None => return Err("Can't get target".into())
+      },
+      None => return Err("Lose target".into())
+    };
+    let is = match type_ {
+      "i8" | "i16" | "i32" | "i64" | "i128" | "isize" |
+      "u8" | "u16" | "u32" | "u64" | "u128" | "usize" |
+      "f32" | "f64" |
+      "bool" => true,
+      _ => false
+    };
+    Ok(serde_json::value::to_value(is).unwrap())
+  });
+
+  // is optional
+  let is_optional = Box::new(|argument: HashMap<String, Value>| -> tera::Result<Value> {
+    let type_ = match argument.get("type_") {
+      Some(t) => match t.as_str() {
+        Some(n) => n,
+        None => return Err("Can't get target".into())
+      },
+      None => return Err("Lose target".into())
+    };
+    let is = type_.starts_with("Option<");
+    Ok(serde_json::value::to_value(is).unwrap())
+  });
 
   tera.register_function("td_arg", td_arg);
+  tera.register_function("sub_tokens", sub_tokens);
+  tera.register_function("find_token", find_token);
+  tera.register_function("is_primitive", is_primitive);
+  tera.register_function("is_optional", is_optional);
   Ok(())
 }
 
@@ -111,12 +229,14 @@ fn fill_type_components(components: Vec<TLTokenComponentType>, tdtypefill: &TDTy
   let mut rets = vec![];
   for component in components {
     let mut sign_type = component.sign_type();
+    sign_type = tdtypefill.mapper(&sign_type).map_or(sign_type.to_camel(), |v| v);
+
     let sub_components = component.components();
     if !sub_components.is_empty() {
       let component_type = fill_type_components(sub_components, tdtypefill);
       sign_type = format!("{}{}", sign_type, component_type);
     }
-    rets.push(format!("<{}>", tdtypefill.mapper(&sign_type).map_or(sign_type.to_camel(), |v| v)));
+    rets.push(format!("<{}>", sign_type));
   }
   rets.join(", ")
 }

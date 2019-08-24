@@ -9,6 +9,7 @@ use tl_parser::types::TLTokenGroup;
 
 use crate::Cycle;
 use crate::tokenwrap::TokenWrap;
+use std::collections::HashMap;
 
 pub struct RTD<'a> {
   cycle: &'a Cycle,
@@ -33,13 +34,13 @@ impl<'a> RTD<'a> {
     // move root path file
     self.copy_file_to(&path_template, config.path_rtd())?;
     // generate src file
-    self.gen_src(&path_template)?;
+    self.gensrc(&path_template)?;
     Ok(())
   }
 
   fn clearance(&self) -> Result<(), failure::Error> {
     let base_dir = self.cycle.config().path_rtd();
-    std::fs::remove_dir_all(base_dir.join("_src"))?;
+    std::fs::remove_dir_all(base_dir.join("src"))?;
     Ok(())
   }
 
@@ -66,14 +67,14 @@ impl<'a> RTD<'a> {
   }
 
   /// generate src rs file.
-  fn gen_src<P: AsRef<Path>>(&self, path_template: P) -> Result<(), failure::Error> {
+  fn gensrc<P: AsRef<Path>>(&self, path_template: P) -> Result<(), failure::Error> {
     let config = self.cycle.config();
     let path_template = path_template.as_ref();
 
-    let template_src: PathBuf = path_template.join("src");
-    let rtd_src: PathBuf = config.path_rtd().join("_src");
+    let templatesrc: PathBuf = path_template.join("src");
+    let rtdsrc: PathBuf = config.path_rtd().join("src");
     // copy src path rs file to target dir
-    self.copy_file_to(&template_src, &rtd_src)?;
+    self.copy_file_to(&templatesrc, &rtdsrc)?;
 
     // generate common rs
     self.gen_common()?;
@@ -89,15 +90,26 @@ impl<'a> RTD<'a> {
     let tknwrap = self.cycle.tknwrap();
 
     let mut context = Context::new();
+    let tokens = tknwrap.tokens();
 
-    let all_types = tknwrap.all_types();
-    context.insert("all_types", &all_types);
+    let mut file_obj_map = HashMap::new();
+    for token in tokens {
+      if tknwrap.is_skip_type(token.name()) { continue }
+      let file_name = tknwrap.which_file(token.name());
+      let mut vec_of_file_obj = file_obj_map.get(&file_name).map_or(vec![], |v: &Vec<TLTokenGroup>| v.clone());
+      vec_of_file_obj.push(token.clone());
+      file_obj_map.insert(file_name, vec_of_file_obj);
+    }
+    context.insert("file_obj_map", &file_obj_map);
+    context.insert("tokens", tokens);
+
+
 
     self.cycle.renderer().render("rtdlib/src/types/_common.rs",
-                                 config.path_rtd().join("_src/types/_common.rs"),
+                                 config.path_rtd().join("src/types/_common.rs"),
                                  &mut context)?;
     self.cycle.renderer().render("rtdlib/src/types/mod.rs",
-                                 config.path_rtd().join("_src/types/mod.rs"),
+                                 config.path_rtd().join("src/types/mod.rs"),
                                  &mut context)?;
     Ok(())
   }
@@ -114,7 +126,7 @@ impl<'a> RTD<'a> {
       let file_name = tknwrap.which_file(token.name());
       context.insert("token", token);
       self.cycle.renderer().render("rtdlib/src/types/td_type.rs",
-                                   config.path_rtd().join(&format!("_src/types/{}.rs", file_name)[..]),
+                                   config.path_rtd().join(&format!("src/types/{}.rs", file_name)[..]),
                                    &mut context)?;
     }
     Ok(())

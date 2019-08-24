@@ -93,3 +93,96 @@ sample
 
 
 
+[filter.PageBlockCover]
+[filter.PageBlockCover.cover]
+sign_type = "Box<PageBlock>"
+optional = false
+reason = "recursive type"
+
+
+[filter.RichTextPlain]
+[filter.RichTextPlain.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextBold]
+[filter.RichTextBold.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextItalic]
+[filter.RichTextItalic.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextUnderline]
+[filter.RichTextUnderline.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextStrikethrough]
+[filter.RichTextStrikethrough.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextFixed]
+[filter.RichTextFixed.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextUrl]
+[filter.RichTextUrl.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextEmailAddress]
+[filter.RichTextEmailAddress.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextSubscript]
+[filter.RichTextSubscript.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextSuperscript]
+[filter.RichTextSuperscript.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextMarked]
+[filter.RichTextMarked.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextPhoneNumber]
+[filter.RichTextPhoneNumber.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextAnchor]
+[filter.RichTextAnchor.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTexts]
+[filter.RichTexts.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+
+

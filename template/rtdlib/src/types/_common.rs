@@ -1,6 +1,7 @@
+use std::fmt::Debug;
 
-
-
+use crate::errors::*;
+use crate::types::*;
 
 macro_rules! rtd_enum_deserialize {
   ($type_name:ident, $(($td_name:ident, $enum_item:ident));*;) => {
@@ -38,11 +39,59 @@ macro_rules! rtd_enum_deserialize {
 }
 
 
+///// tuple enum is field
+//macro_rules! tuple_enum_is {
+//  ($enum_name:ident, $field:ident) => {
+//    |o: &$enum_name| {
+//      if let $enum_name::$field(_) = o { true } else { false }
+//    }
+//  };
+////  ($e:ident, $t:ident, $namespace:ident) => {
+////    Box::new(|t: &$e| {
+////      match t {
+////        $namespace::$e::$t(_) => true,
+////        _ => false
+////      }
+////    })
+////  };
+//}
+//
+//macro_rules! tuple_enum_on {
+//  ($enum_name:ident, $field:ident, $fnc:expr) => {
+//    |o: &$enum_name| {
+//      if let $enum_name::$field(t) = o { $fnc(t) }
+//    }
+//  };
+//}
+
 
 /// All tdlib type abstract class defined the same behavior
 pub trait RObject: Debug {
-  #[doc(hidden)] fn td_name(&self) -> &'static str;
+  #[doc(hidden)]
+  fn td_name(&self) -> &'static str;
   /// Return td type to json string
-  fn to_json(&self) -> String;
+  fn to_json(&self) -> RTDResult<String>;
 }
+
+pub trait RFunction: Debug + RObject {}
+
+
+impl<'a, RObj: RObject> RObject for &'a RObj {
+  fn td_name(&self) -> &'static str { (*self).td_name() }
+  fn to_json(&self) -> RTDResult<String> { (*self).to_json() }
+}
+
+impl<'a, RObj: RObject> RObject for &'a mut RObj {
+  fn td_name(&self) -> &'static str { (**self).td_name() }
+  fn to_json(&self) -> RTDResult<String> { (**self).to_json() }
+}
+
+
+impl<'a, Fnc: RFunction> RFunction for &'a Fnc {}
+impl<'a, Fnc: RFunction> RFunction for &'a mut Fnc {}
+
+{% for token in tokens %}{% if token.type_ == 'Trait' %}
+impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &'a {{token.name | upper}} {}
+impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &'a mut {{token.name | upper}} {}
+{% endif %}{% endfor %}
 

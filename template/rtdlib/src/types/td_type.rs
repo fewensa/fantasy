@@ -1,26 +1,16 @@
-
 {% if first_write %}
 use std::fmt::Debug;
 
 use crate::types::*;
+use crate::errors::*;
 {% endif %}
 
 {% if token.type_ == "Trait" %}
+{% if first_write %}
+use serde::de::{Deserialize, Deserializer};
+{% endif %}
 
-// {{token.description}}
-++ {{token.type_}}
-
+{% include "rtdlib/src/types/td_type_trait.rs" %}
 {% else %}
-
-/// {{token.description}}
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct {{token.name | to_camel}} {
-  #[doc(hidden)]
-  #[serde(rename(serialize = "@type", deserialize = "@type"))]
-  td_name: String,
-{% for field in token.arguments %}  /// {{field.description}}
-  {{field.sign_name | safe_field}}: {{td_arg(arg=field, token=token)}},
-{% endfor %}
-}
-
+{% include "rtdlib/src/types/td_type_struct.rs" %}
 {% endif %}

@@ -20,10 +20,10 @@ lazy_static! {
   };
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TokenWrap {
   tokens: Vec<TLTokenGroup>,
-  tdtypefill: TDTypeFill
+  tdtypefill: TDTypeFill,
 }
 
 impl TokenWrap {
@@ -35,12 +35,8 @@ impl TokenWrap {
     &self.tokens
   }
 
-  /// all td types
-  pub fn all_types(&self) -> Vec<String> {
-    self.tokens.iter()
-      .filter(|&item| !SKIP_TYPES.contains(&&item.name()[..]))
-      .map(|item| item.name())
-      .collect()
+  pub fn tdtypefill(&self) -> &TDTypeFill {
+    &self.tdtypefill
   }
 
   /// is skip type
@@ -66,9 +62,14 @@ impl TokenWrap {
         } else {
           blood.to_snake()
         }
-      },
+      }
       None => token.name().to_snake()
     }
   }
 
+  pub fn is_optional_arg(&self, token: &TLTokenGroup, arg: &TLTokenArgType) -> bool {
+    self.tdtypefill.td_filter(token.name(), arg.sign_name())
+      .map_or_else(|| arg.description().map_or(false, |v| v.replace(" ", "").contains("maybenull")),
+                   |v| v.optional())
+  }
 }
