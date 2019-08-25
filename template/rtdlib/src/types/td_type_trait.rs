@@ -8,7 +8,7 @@ pub trait TD{{trait_name}}: Debug + RObject {}
 pub enum {{trait_name}} {
   #[doc(hidden)] _Default(()),
 {% for subt in sub_tokens(token=token) %}  /// {{subt.description}}
-  {{subt.name | td_enum_item_name(token=token)}}({{subt.name | to_camel}}),
+  {{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}({{subt.name | to_camel}}),
 {% endfor %}
 }
 
@@ -21,7 +21,7 @@ impl<'de> Deserialize<'de> for {{trait_name}} {
     use serde::de::Error;
     rtd_enum_deserialize!(
       {{trait_name}},
-{% for subt in sub_tokens(token=token) %}      ({{subt.name}}, {{subt.name | td_enum_item_name(token=token)}});
+{% for subt in sub_tokens(token=token) %}      ({{subt.name}}, {{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}});
 {% endfor %}
     )(deserializer)
   }
@@ -33,16 +33,17 @@ impl RObject for {{trait_name}} {
 }
 
 impl {{trait_name}} {
+  pub fn from_json<S: AsRef<str>>(json: S) -> RTDResult<Self> { Ok(serde_json::from_str(json.as_ref())?) }
   #[doc(hidden)] pub fn _is_default(&self) -> bool { if let {{trait_name}}::_Default(_) = self { true } else { false } }
 
-{% for subt in sub_tokens(token=token) %}  pub fn is_{{subt.name | td_enum_item_name(token=token) | to_snake}}(&self) -> bool { if let {{trait_name}}::{{subt.name | td_enum_item_name(token=token)}}(_) = self { true } else { false } }
+{% for subt in sub_tokens(token=token) %}  pub fn is_{{subt.name | td_remove_prefix(prefix=trait_name) | to_snake}}(&self) -> bool { if let {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(_) = self { true } else { false } }
 {% endfor %}
-{% for subt in sub_tokens(token=token) %}  pub fn on_{{subt.name | td_enum_item_name(token=token) | to_snake}}<F: FnOnce(&{{subt.name | to_camel}})>(&self, fnc: F) -> &Self { if let {{trait_name}}::{{subt.name | td_enum_item_name(token=token)}}(t) = self { fnc(t) }; self }
+{% for subt in sub_tokens(token=token) %}  pub fn on_{{subt.name | td_remove_prefix(prefix=trait_name) | to_snake}}<F: FnOnce(&{{subt.name | to_camel}})>(&self, fnc: F) -> &Self { if let {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(t) = self { fnc(t) }; self }
 {% endfor %}
-{% for subt in sub_tokens(token=token) %}  pub fn to_{{subt.name | td_enum_item_name(token=token) | to_snake}}(&self) -> Option<&{{subt.name | to_camel}}> { if let {{trait_name}}::{{subt.name | td_enum_item_name(token=token)}}(t) = self { return Some(t) } None }
+{% for subt in sub_tokens(token=token) %}  pub fn to_{{subt.name | td_remove_prefix(prefix=trait_name) | to_snake}}(&self) -> Option<&{{subt.name | to_camel}}> { if let {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(t) = self { return Some(t) } None }
 {% endfor %}
 
-{% for subt in sub_tokens(token=token) %}{% set item_name = subt.name | td_enum_item_name(token=token) %}
+{% for subt in sub_tokens(token=token) %}{% set item_name = subt.name | td_remove_prefix(prefix=trait_name) | to_camel %}
   pub fn {{item_name | to_snake}}(t: {{subt.name | to_camel}}) -> Self { {{trait_name}}::{{item_name}}(t) }
 {% endfor %}
 }

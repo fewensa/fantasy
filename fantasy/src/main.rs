@@ -15,11 +15,13 @@ use tera::Tera;
 
 use cycle::*;
 use rtd::RTD;
+use tgclient::TGClient;
 use tl_parser::parser::parser::TLParser;
 use tokenwrap::TokenWrap;
 
 mod cycle;
 mod rtd;
+mod tgclient;
 mod tokenwrap;
 mod terafill;
 mod types;
@@ -57,5 +59,6 @@ fn main() {
     .renderer(renderer)
     .build();
 
-  RTD::new(&cycle).generate().unwrap();
+//  RTD::new(&cycle).generate().unwrap();
+  TGClient::new(&cycle).generate().unwrap();
 }

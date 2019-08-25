@@ -21,6 +21,7 @@ impl RObject for {{struct_name}} {
 {% if token.type_ == 'Function' %}impl RFunction for {{struct_name}} {}{% endif %}
 
 impl {{struct_name}} {
+  pub fn from_json<S: AsRef<str>>(json: S) -> RTDResult<Self> { Ok(serde_json::from_str(json.as_ref())?) }
   pub fn builder() -> RTD{{struct_name}}Builder {
     let mut inner = {{struct_name}}::default();
     inner.td_name = "{{token.name}}".to_string();
