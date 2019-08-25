@@ -46,7 +46,7 @@ impl {{trait_name}} {
 {% endfor %}
 {% for subt in sub_tokens(token=token) %}  pub fn on_{{subt.name | td_remove_prefix(prefix=trait_name) | to_snake}}<F: FnOnce(&{{subt.name | to_camel}})>(&self, fnc: F) -> &Self { if let {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(t) = self { fnc(t) }; self }
 {% endfor %}
-{% for subt in sub_tokens(token=token) %}  pub fn to_{{subt.name | td_remove_prefix(prefix=trait_name) | to_snake}}(&self) -> Option<&{{subt.name | to_camel}}> { if let {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(t) = self { return Some(t) } None }
+{% for subt in sub_tokens(token=token) %}  pub fn as_{{subt.name | td_remove_prefix(prefix=trait_name) | to_snake}}(&self) -> Option<&{{subt.name | to_camel}}> { if let {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(t) = self { return Some(t) } None }
 {% endfor %}
 
 {% for subt in sub_tokens(token=token) %}{% set item_name = subt.name | td_remove_prefix(prefix=trait_name) | to_camel %}
