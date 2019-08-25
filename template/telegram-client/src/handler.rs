@@ -1,10 +1,9 @@
 use rtdlib::types::Update;
-use crate::types::*;
+use rtdlib::types::RObject;
 
 use crate::api::Api;
-use crate::handler::handler_receive::ReceiveHandler;
 use crate::listener::{Listener, Lout};
-use crate::errors;
+use crate::errors::TGError;
 use crate::tip;
 
 pub struct Handler<'a> {
@@ -23,25 +22,36 @@ impl<'a> Handler<'a> {
   pub fn handle(&self, json: &'a String) {
     match Update::from_json(json) {
       Ok(update) => {
-        self.lout.receive().map(|env| {
-          env((self.api, &update));
-        });
+
+        if let Some(ev) = self.lout.receive() {
+          ev((self.api, &update));
+        }
+
+        if !self.lout.is_support(update.td_name()) {
+          warn!("{}", tip::not_have_listener(update.td_name()));
+          return;
+        }
+
         {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
         update.on_{{token.name | td_remove_prefix(prefix='Update') | to_snake}}(|t| {
-          self.lout.{{token.name | td_remove_prefix(prefix='Update') | to_snake}}()
-            .map_or_else(|| {
-              warn!(tip::not_have_listener(t.td_name()));
-            }, |env| {
-              env((self.api, &update));
-            })
+          if let Some(ev) = self.lout.{{token.name | td_remove_prefix(prefix='Update') | to_snake}}() {
+            if let Err(e) = ev((self.api, t)) {
+              if let Some(ev) = self.lout.exception() {
+                ev((self.api, &e));
+              }
+            }
+            return;
+          }
+          warn!("{}", tip::un_register_listener(update.td_name()));
         });
         {% endif %}{% endfor %}
       },
       Err(e) => {
-        self.lout.exception().map(|ev| {
-          let ex = TGException::new(json, e);
-          ev((self.api, &ex))
-        });
+        if let Some(ev) = self.lout.exception() {
+          let mut ex = TGError::new("CONVERT_JSON_FAIL");
+          ex.set_message(json);
+          ev((self.api, &ex));
+        }
       }
     }
   }

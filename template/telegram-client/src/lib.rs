@@ -9,6 +9,5 @@ mod tip;
 pub mod api;
 pub mod client;
 pub mod listener;
-pub mod types;
 pub mod errors;
 

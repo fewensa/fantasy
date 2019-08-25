@@ -20,6 +20,9 @@ pub fn data_fail_with_json<S: AsRef<str>>(json: S) -> String {
 }
 
 pub fn data_fail_with_rtd<ROBJ: RObject>(robj: ROBJ) -> String {
-  data_fail_with_json(robj.to_json())
+  data_fail_with_json(robj.to_json().unwrap_or("".to_string()))
 }
 
+pub fn un_register_listener<S: AsRef<str>>(td_name: S) -> String {
+  format!("UNREGISTER LISTENER [{}] PLEASE REGISTER IT", td_name.as_ref())
+}

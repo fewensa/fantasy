@@ -140,7 +140,6 @@ impl<'a> TGClient<'a> {
       (path_template.join("src/rtd.rs"), base_dir.join("src/rtd.rs")),
       (path_template.join("src/rtd.rs"), base_dir.join("src/rtd.rs")),
       (path_template.join("src/tip.rs"), base_dir.join("src/tip.rs")),
-      (path_template.join("src/types.rs"), base_dir.join("src/types.rs")),
       (path_template.join("src/errors.rs"), base_dir.join("src/errors.rs")),
     ];
 

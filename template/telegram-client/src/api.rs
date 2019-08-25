@@ -29,32 +29,32 @@ impl Api {
     self.tdlib.borrow()
   }
 
-  pub fn send<Fnc: RFunction>(&self, fnc: Fnc) -> &Self {
-    let json = fnc.to_json();
+  pub fn send<Fnc: RFunction>(&self, fnc: Fnc) -> RTDResult<()> {
+    let json = fnc.to_json()?;
     info!("===> {}", json);
     self.tdlib.send(&json[..]);
-    self
+    Ok(())
   }
 
   pub fn receive(&self, timeout: f64) -> Option<String> {
     let receive = self.tdlib.receive(timeout);
     if receive.is_some() {
-      info!("<=== {}", receive.map_or("NONE".to_string(), |v| v));
+      info!("<=== {}", receive.clone().map_or("NONE".to_string(), |v| v));
     }
     receive
   }
 
-  pub fn execute<Fnc: Function>(&self, fnc: Fnc) -> Option<String> {
-    let json = fnc.to_json();
+  pub fn execute<Fnc: RFunction>(&self, fnc: Fnc) -> RTDResult<Option<String>> {
+    let json = fnc.to_json()?;
     info!("===>>> {}", json);
-    self.tdlib.execute(&json[..])
+    Ok(self.tdlib.execute(&json[..]))
   }
 
 {% for token in tokens %}{% if token.type_ == 'Function' %}
-  pub fn {{token.name | to_snake}}<C: AsRef<{{token.name | to_camel}}>>(&self, {{token.name | to_snake}}: C) -> {% if token.blood and token.blood == 'Ok' %}&Self{% else %}RTDResult<{{token.blood}}>{% endif %} {
+  pub fn {{token.name | to_snake}}<C: AsRef<{{token.name | to_camel}}>>(&self, {{token.name | to_snake}}: C) -> {% if token.blood and token.blood == 'Ok' %}RTDResult<()>{% else %}RTDResult<{{token.blood}}>{% endif %} {
   {% if token.blood and token.blood == 'Ok' %}  self.send({{token.name | to_snake}}.as_ref()) {% else %}
-    match self.execute({{token.name | to_snake}}.as_ref()) {
-      Some(json) => Ok({{token.blood}}.from_json(json)?),
+    match self.execute({{token.name | to_snake}}.as_ref())? {
+      Some(json) => Ok({{token.blood}}::from_json(json)?),
       None => Err(rtdlib::errors::RTDError::custom(tip::no_data_returned_from_tdlib())),
     }
   {% endif %}

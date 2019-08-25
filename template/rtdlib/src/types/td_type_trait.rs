@@ -28,7 +28,13 @@ impl<'de> Deserialize<'de> for {{trait_name}} {
 }
 
 impl RObject for {{trait_name}} {
-  #[doc(hidden)] fn td_name(&self) -> &'static str { "{{token.name}}" }
+  #[doc(hidden)] fn td_name(&self) -> &'static str {
+    match self {
+{% for subt in sub_tokens(token=token) %}      {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(t) => t.td_name(),
+{% endfor %}
+      _ => "-1",
+    }
+  }
   fn to_json(&self) -> RTDResult<String> { Ok(serde_json::to_string(self)?) }
 }
 
