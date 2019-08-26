@@ -35,47 +35,54 @@ impl<'a> Handler<'a> {
 
   pub fn handle(&self, json: &'a String) {
 
+    let td_type = match rtd_types::detect_td_type(json) {
+      Some(t) => t,
+      None => {
+        warn!("{}", tip::data_fail_with_json(json));
+        return;
+      }
+    };
+    if !self.lout.is_support(&td_type) {
+      warn!("{}", tip::not_have_listener(td_type));
+      return;
+    }
+
     if let Some(ev) = self.lout.receive() {
       if let Err(e) = ev((self.api, json)) {
         if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
       }
     }
 
-    let event_update = Update::from_json(json);
-    if let Ok(update) = event_update {
-      self.handler_update(&update);
-      return;
-    }
+    match Update::from_json(json) {
+      Ok(update) => {
+        self.handler_update(&update);
+        return;
+      }
+      Err(e) => {
+        warn!("{}\n{:?}", tip::data_fail_with_json(json), e);
+      }
+    };
 
-    if let Some(td_type) = rtd_types::detect_td_type(json) {
-      match &td_type[..] {
-        {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
-        "{{token.name | to_snake | to_camel_lowercase}}" => {
-          if let Some(ev) = self.lout.{{name | to_snake}}() {
-            if let Ok(t) = rtd_types::from_json::<rtd_types::{{token.name | to_camel}}>(json) {
-              if let Err(e) = ev((self.api, &t)) {
-                if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
-              }
+    match &td_type[..] {
+      {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
+      "{{token.name | to_snake | to_camel_lowercase}}" => {
+        if let Some(ev) = self.lout.{{name | to_snake}}() {
+          if let Ok(t) = rtd_types::from_json::<rtd_types::{{token.name | to_camel}}>(json) {
+            if let Err(e) = ev((self.api, &t)) {
+              if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
             }
           }
         }
-        {% endfor %}
-        _ => {
-          warn!("{}", tip::data_fail_with_json(json))
-        }
       }
-      return;
+      {% endfor %}
+      _ => {
+        warn!("{}", tip::data_fail_with_json(json))
+      }
     }
 
-    warn!("{}", tip::data_fail_with_json(json));
   }
 
   fn handler_update(&self, update: &Update) {
-
-    if !self.lout.is_support(update.td_name()) {
-      warn!("{}", tip::not_have_listener(update.td_name()));
-      return;
-    }
 
     {% for token in tokens %}{% if token.blood and token.blood == 'Update' %} {% set ev_name=token.name | td_remove_prefix(prefix='Update') | to_snake %}
     if update.is_{{ev_name}}() { event_update!({{ev_name}}, on_{{ev_name}})(self.api, self.lout, update); return; }

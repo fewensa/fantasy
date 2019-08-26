@@ -50,7 +50,7 @@ impl {{trait_name}} {
 {% endfor %}
 
 {% for subt in sub_tokens(token=token) %}{% set item_name = subt.name | td_remove_prefix(prefix=trait_name) | to_camel %}
-  pub fn {{item_name | to_snake}}(t: {{subt.name | to_camel}}) -> Self { {{trait_name}}::{{item_name}}(t) }
+  pub fn {{item_name | to_snake}}<T: AsRef<{{subt.name | to_camel}}>>(t: T) -> Self { {{trait_name}}::{{item_name}}(t.as_ref().clone()) }
 {% endfor %}
 }
 

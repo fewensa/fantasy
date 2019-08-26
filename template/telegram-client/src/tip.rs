@@ -16,7 +16,7 @@ pub fn not_have_listener<S: AsRef<str>>(td_name: S) -> String {
 }
 
 pub fn data_fail_with_json<S: AsRef<str>>(json: S) -> String {
-  format!("{} {} \n INCLUDE THIS JSON => {} \n AND PANIC TRACE", TELEGRAM_DATA_FAIL, PLZ_POST_ISSUES, json.as_ref())
+  format!("{} {} \n INCLUDE THIS JSON => {}", TELEGRAM_DATA_FAIL, PLZ_POST_ISSUES, json.as_ref())
 }
 
 pub fn data_fail_with_rtd<ROBJ: RObject>(robj: ROBJ) -> String {
