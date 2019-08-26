@@ -64,6 +64,20 @@ macro_rules! rtd_enum_deserialize {
 //  };
 //}
 
+pub fn detect_td_type<S: AsRef<str>>(json: S) -> Option<String> {
+  let result: Result<serde_json::Value, serde_json::Error> = serde_json::from_str::<serde_json::Value>(json.as_ref());
+  if let Err(_) = result { return None }
+  let value = result.unwrap();
+  value.as_object().map_or(None, |v| {
+    v.get("@type").map_or(None, |t| t.as_str().map_or(None, |t| {
+      Some(t.to_string())
+    }))
+  })
+}
+
+pub fn from_json<'a, T>(json: &'a str) -> RTDResult<T> where T: serde::de::Deserialize<'a>, {
+  Ok(serde_json::from_str(json.as_ref())?)
+}
 
 /// All tdlib type abstract class defined the same behavior
 pub trait RObject: Debug {

@@ -1,5 +1,5 @@
-use rtdlib::types::{Update, Error};
-use rtdlib::types::RObject;
+use rtdlib::types as rtd_types;
+use rtdlib::types::{RObject, Update, Error};
 
 use crate::api::Api;
 use crate::listener::{Listener, Lout};
@@ -11,7 +11,7 @@ pub struct Handler<'a> {
   lout: &'a Lout,
 }
 
-macro_rules! handler_event {
+macro_rules! event_update {
   ($event_name:ident, $on:ident) => {
     |api: &Api, lout: &Lout, update: &Update| {
       update.$on(|t| {
@@ -34,56 +34,43 @@ impl<'a> Handler<'a> {
   }
 
   pub fn handle(&self, json: &'a String) {
-    let update_event = Update::from_json(json);
-    if let Ok(update) = update_event {
+
+    if let Some(ev) = self.lout.receive() {
+      if let Err(e) = ev((self.api, json)) {
+        if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
+      }
+    }
+
+    let event_update = Update::from_json(json);
+    if let Ok(update) = event_update {
       self.handler_update(&update);
       return;
     }
 
-    let mut already_handler = false;
-    let ok_event = rtdlib::types::Ok::from_json(json);
-    if let Ok(ok) = ok_event {
-      already_handler = true;
-      self.handler_ok(&ok);
-      return;
-    } else {
-      let error_event = rtdlib::types::Error::from_json(json);
-      if let Ok(error) = error_event {
-        already_handler = true;
-        self.handler_error(&error);
-        return;
+    if let Some(td_type) = rtd_types::detect_td_type(json) {
+      match &td_type[..] {
+        {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
+        "{{token.name | to_snake | to_camel_lowercase}}" => {
+          if let Some(ev) = self.lout.{{name | to_snake}}() {
+            if let Ok(t) = rtd_types::from_json::<rtd_types::{{token.name | to_camel}}>(json) {
+              if let Err(e) = ev((self.api, &t)) {
+                if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
+              }
+            }
+          }
+        }
+        {% endfor %}
+        _ => {
+          warn!("{}", tip::data_fail_with_json(json))
+        }
       }
+      return;
     }
-    if already_handler { return; }
 
     warn!("{}", tip::data_fail_with_json(json));
   }
 
-  fn handler_error(&self, error: &rtdlib::types::Error) {
-    if let Some(ev) = self.lout.error() {
-      if let Err(e) = ev((self.api, error)) {
-        if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
-      }
-      return;
-    }
-    warn!("{}", tip::un_register_listener(error.td_name()));
-  }
-
-  fn handler_ok(&self, ok: &rtdlib::types::Ok) {
-    if let Some(ev) = self.lout.ok() {
-      if let Err(e) = ev((self.api, ok)) {
-        if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
-      }
-      return;
-    }
-    warn!("{}", tip::un_register_listener(ok.td_name()));
-  }
-
   fn handler_update(&self, update: &Update) {
-
-    if let Some(ev) = self.lout.receive() {
-      ev((self.api, update));
-    }
 
     if !self.lout.is_support(update.td_name()) {
       warn!("{}", tip::not_have_listener(update.td_name()));
@@ -91,7 +78,7 @@ impl<'a> Handler<'a> {
     }
 
     {% for token in tokens %}{% if token.blood and token.blood == 'Update' %} {% set ev_name=token.name | td_remove_prefix(prefix='Update') | to_snake %}
-    if update.is_{{ev_name}}() { handler_event!({{ev_name}}, on_{{ev_name}})(self.api, self.lout, update); return; }
+    if update.is_{{ev_name}}() { event_update!({{ev_name}}, on_{{ev_name}})(self.api, self.lout, update); return; }
     {% endif %}{% endfor %}
 
     {#

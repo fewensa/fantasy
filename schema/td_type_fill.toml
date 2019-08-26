@@ -186,9 +186,9 @@ reason = "recursive type"
 
 
 
-listener = [
-  { td_type = "Ok", name = "ok" },
-  { td_type = "Error", name = "error" },
-  { td_type = "Proxy", name = "proxy" },
-]
+[listener]
+ok = "Ok"
+error = "Error"
+proxy = "Proxy"
+
 

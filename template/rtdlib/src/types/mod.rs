@@ -1,7 +1,9 @@
 
 pub use self::_common::{
   RObject,
-  RFunction
+  RFunction,
+  detect_td_type,
+  from_json,
 };
 
 #[macro_use] mod _common;

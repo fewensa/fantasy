@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::DirEntry;
 use std::path::{Path, PathBuf};
 
@@ -9,8 +10,6 @@ use tl_parser::types::TLTokenGroup;
 
 use crate::Cycle;
 use crate::tokenwrap::TokenWrap;
-use std::collections::HashMap;
-
 
 pub struct TGClient<'a> {
   cycle: &'a Cycle,
@@ -95,9 +94,47 @@ impl<'a> TGClient<'a> {
     let tokens = tknwrap.tokens();
     context.insert("tokens", tokens);
 
+    let listener: HashMap<&String, &String> = tknwrap.tdtypefill().listener()
+      .iter()
+      .filter(|(key, value)| {
+        tknwrap.tokens().iter()
+          .filter(|&token| token.blood() == Some("Update".to_string()))
+          .find(|&token| token.name().to_lowercase() == value.to_lowercase())
+          .is_none()
+      })
+      .collect();
+
+    context.insert("listener", &listener);
 
     self.cycle.renderer().render("telegram-client/src/listener.rs",
                                  config.path_telegram_client().join("src/listener.rs"),
+                                 &mut context)?;
+    Ok(())
+  }
+
+
+  fn gen_handler(&self) -> Result<(), failure::Error> {
+    let config = self.cycle.config();
+    let tknwrap = self.cycle.tknwrap();
+
+    let mut context = Context::new();
+    let tokens = tknwrap.tokens();
+
+    context.insert("tokens", tokens);
+    let listener: HashMap<&String, &String> = tknwrap.tdtypefill().listener()
+      .iter()
+      .filter(|(key, value)| {
+        tknwrap.tokens().iter()
+          .filter(|&token| token.blood() == Some("Update".to_string()))
+          .find(|&token| token.name().to_lowercase() == value.to_lowercase())
+          .is_none()
+      })
+      .collect();
+
+    context.insert("listener", &listener);
+
+    self.cycle.renderer().render("telegram-client/src/handler.rs",
+                                 config.path_telegram_client().join("src/handler.rs"),
                                  &mut context)?;
     Ok(())
   }
@@ -112,20 +149,6 @@ impl<'a> TGClient<'a> {
 
     self.cycle.renderer().render("telegram-client/src/api.rs",
                                  config.path_telegram_client().join("src/api.rs"),
-                                 &mut context)?;
-    Ok(())
-  }
-
-  fn gen_handler(&self) -> Result<(), failure::Error> {
-    let config = self.cycle.config();
-    let tknwrap = self.cycle.tknwrap();
-
-    let mut context = Context::new();
-    let tokens = tknwrap.tokens();
-    context.insert("tokens", tokens);
-
-    self.cycle.renderer().render("telegram-client/src/handler.rs",
-                                 config.path_telegram_client().join("src/handler.rs"),
                                  &mut context)?;
     Ok(())
   }

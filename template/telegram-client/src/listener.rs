@@ -9,13 +9,14 @@ use crate::api::Api;
 #[derive(Clone, Default)]
 pub struct Listener {
   exception: Option<Arc<Fn((&Api, &TGError)) + Send + Sync + 'static>>,
+  receive: Option<Arc<Fn((&Api, &String)) -> TGResult<()> + Send + Sync + 'static>>,
 
-  receive: Option<Arc<Fn((&Api, &Update)) -> TGResult<()> + Send + Sync + 'static>>,
-  ok: Option<Arc<Fn((&Api, &Ok)) -> TGResult<()> + Send + Sync + 'static>>,
-  error: Option<Arc<Fn((&Api, &Error)) -> TGResult<()> + Send + Sync + 'static>>,
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}  {{name | to_snake}}: Option<Arc<Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
+{% endfor %}
 
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name | td_remove_prefix(prefix='Update') | to_snake}}: Option<Arc<Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
 {% endif %}{% endfor %}
+
 }
 
 
@@ -28,7 +29,7 @@ impl Listener {
 
 
   /// when receive data from tdlib
-  pub fn on_receive<F>(&mut self, fnc: F) -> &mut Self where F: Fn((&Api, &Update)) -> TGResult<()> + Send + Sync + 'static {
+  pub fn on_receive<F>(&mut self, fnc: F) -> &mut Self where F: Fn((&Api, &String)) -> TGResult<()> + Send + Sync + 'static {
     self.receive = Some(Arc::new(fnc));
     self
   }
@@ -39,17 +40,13 @@ impl Listener {
     self
   }
 
-  /// An object of this type is returned on a successful function call for certain functions
-  pub fn on_ok<F>(&mut self, fnc: F) -> &mut Self where F: Fn((&Api, &Ok)) -> TGResult<()> + Send + Sync + 'static {
-    self.ok = Some(Arc::new(fnc));
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
+  /// {{token.description}}
+  pub fn on_{{name | to_snake}}<F>(&mut self, fnc: F) -> &mut Self where F: Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static {
+    self.{{name}} = Some(Arc::new(fnc));
     self
   }
-
-  /// An object of this type can be returned on every function call, in case of an error
-  pub fn on_error<F>(&mut self, fnc: F) -> &mut Self where F: Fn(((&Api, &Error))) -> TGResult<()> + Send + Sync + 'static {
-    self.error = Some(Arc::new(fnc));
-    self
-  }
+{% endfor %}
 
 
 
@@ -73,6 +70,9 @@ pub struct Lout {
 impl Lout {
   fn new(listener: Listener) -> Self {
     let supports = vec![
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}      "{{token.name | to_snake | to_camel_lowercase}}",
+{% endfor %}
+
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}      "{{token.name}}",
 {% endif %}{% endfor %}
     ];
@@ -91,20 +91,16 @@ impl Lout {
   }
 
   /// when receive data from tdlib
-  pub fn receive(&self) -> &Option<Arc<Fn((&Api, &Update)) -> TGResult<()> + Send + Sync + 'static>> {
+  pub fn receive(&self) -> &Option<Arc<Fn((&Api, &String)) -> TGResult<()> + Send + Sync + 'static>> {
     &self.listener.receive
   }
 
-  /// An object of this type is returned on a successful function call for certain functions
-  pub fn ok(&self) -> &Option<Arc<Fn((&Api, &Ok)) -> TGResult<()> + Send + Sync + 'static>> {
-    &self.listener.ok
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
+  /// {{token.description}}
+  pub fn {{name | to_snake}}(&self) -> &Option<Arc<Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
+    &self.listener.{{name | to_snake}}
   }
-
-  /// An object of this type can be returned on every function call, in case of an error
-  pub fn error(&self) -> &Option<Arc<Fn(((&Api, &Error))) -> TGResult<()> + Send + Sync + 'static>> {
-    &self.listener.error
-  }
-
+{% endfor %}
 
 
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
