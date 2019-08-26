@@ -2,9 +2,9 @@
 [mapper]
 double = "f32"
 string = "String"
-int32 = "i32"
-int53 = "i32"
-int64 = "i64"
+int32 = "i64"
+int53 = "i64"
+int64 = "isize"
 bytes = "String"
 boolFalse = "bool"
 boolTrue = "bool"

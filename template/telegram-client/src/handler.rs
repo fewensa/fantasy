@@ -15,9 +15,16 @@ macro_rules! event_handler {
   ($event_name:ident, $td_type:ident) => {
     |api: &Api, lout: &Lout, json: &String| {
       if let Some(ev) = lout.$event_name() {
-        if let Ok(t) = rtd_types::from_json::<rtd_types::$td_type>(json) {
-          if let Err(e) = ev((api, &t)) {
-            if let Some(ev) = lout.exception() { ev((api, &TGError::new("EVENT_HANDLER_ERROR"))); }
+        match rtd_types::from_json::<rtd_types::$td_type>(json) {
+          Ok(t) => {
+            if let Err(e) = ev((api, &t)) {
+              if let Some(ev) = lout.exception() { ev((api, &TGError::new("EVENT_HANDLER_ERROR"))); }
+            }
+          }
+          Err(e) => {
+            error!("{}", tip::data_fail_with_json(json));
+            eprintln!("{:?}", e);
+            if let Some(ev) = lout.exception() { ev((api, &TGError::new("DESERIALIZE_JSON_FAIL"))); }
           }
         }
         return;
