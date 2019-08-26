@@ -9,8 +9,8 @@ fantasy generate two crate.
 
 1. [rtdlib](https://github.com/fewensa/rtdlib)
 
-rtdlib this td types for rust.
+    rtdlib is td types for rust.
 
 2. [telegram-client](https://github.com/fewensa/telegram-client)
 
-based on rtdlib, build a telegram client for rust.
+    based on rtdlib, build a telegram client for rust.
