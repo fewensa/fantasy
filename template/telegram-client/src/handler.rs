@@ -11,16 +11,18 @@ pub struct Handler<'a> {
   lout: &'a Lout,
 }
 
-macro_rules! event_update {
-  ($event_name:ident, $on:ident) => {
-    |api: &Api, lout: &Lout, update: &Update| {
-      update.$on(|t| {
-        if let Some(ev) = lout.$event_name() {
-          if let Err(e) = ev((api, t)) {
-            if let Some(ev) = lout.exception() { ev((api, &e)); }
+macro_rules! event_handler {
+  ($event_name:ident, $td_type:ident) => {
+    |api: &Api, lout: &Lout, json: &String| {
+      if let Some(ev) = lout.$event_name() {
+        if let Ok(t) = rtd_types::from_json::<rtd_types::$td_type>(json) {
+          if let Err(e) = ev((api, &t)) {
+            if let Some(ev) = lout.exception() { ev((api, &TGError::new("EVENT_HANDLER_ERROR"))); }
           }
         }
-      });
+        return;
+      }
+      warn!("{}", tip::un_register_listener(stringify!($event_name)));
     }
   };
 }
@@ -34,7 +36,6 @@ impl<'a> Handler<'a> {
   }
 
   pub fn handle(&self, json: &'a String) {
-
     let td_type = match rtd_types::detect_td_type(json) {
       Some(t) => t,
       None => {
@@ -53,57 +54,17 @@ impl<'a> Handler<'a> {
       }
     }
 
-    match Update::from_json(json) {
-      Ok(update) => {
-        self.handler_update(&update);
-        return;
-      }
-      Err(e) => {
-        warn!("{}\n{:?}", tip::data_fail_with_json(json), e);
-      }
-    };
-
     match &td_type[..] {
+      {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
+      "{{token.name}}" => event_handler!({{token.name | td_remove_prefix(prefix='Update') | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json),
+      {% endif %}{% endfor %}
       {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
-      "{{token.name | to_snake | to_camel_lowercase}}" => {
-        if let Some(ev) = self.lout.{{name | to_snake}}() {
-          if let Ok(t) = rtd_types::from_json::<rtd_types::{{token.name | to_camel}}>(json) {
-            if let Err(e) = ev((self.api, &t)) {
-              if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
-            }
-          }
-        }
-      }
+      "{{token.name | to_snake | to_camel_lowercase}}" => event_handler!({{name | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json),
       {% endfor %}
       _ => {
         warn!("{}", tip::data_fail_with_json(json))
       }
     }
-
-  }
-
-  fn handler_update(&self, update: &Update) {
-
-    {% for token in tokens %}{% if token.blood and token.blood == 'Update' %} {% set ev_name=token.name | td_remove_prefix(prefix='Update') | to_snake %}
-    if update.is_{{ev_name}}() { event_update!({{ev_name}}, on_{{ev_name}})(self.api, self.lout, update); return; }
-    {% endif %}{% endfor %}
-
-    {#
-      {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
-      update.on_{{token.name | td_remove_prefix(prefix='Update') | to_snake}}(|t| {
-      if let Some(ev) = self.lout.{{token.name | td_remove_prefix(prefix='Update') | to_snake}}() {
-        if let Err(e) = ev((self.api, t)) {
-          if let Some(ev) = self.lout.exception() {
-            ev((self.api, &e));
-          }
-        }
-        return;
-      }
-      warn!("{}", tip::un_register_listener(update.td_name()));
-    });
-      {% endif %}{% endfor %}
-    #}
-
   }
 
 }
