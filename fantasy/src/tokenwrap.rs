@@ -69,7 +69,10 @@ impl TokenWrap {
 
   pub fn is_optional_arg(&self, token: &TLTokenGroup, arg: &TLTokenArgType) -> bool {
     self.tdtypefill.td_filter(token.name(), arg.sign_name())
-      .map_or_else(|| arg.description().map_or(false, |v| v.replace(" ", "").contains("maybenull")),
-                   |v| v.optional())
+      .map_or_else(|| arg.description().map_or(false, |v| {
+        let nospace = v.replace(" ", "");
+        if nospace.contains("maybenull") { return true }
+        false
+      }), |v| v.optional())
   }
 }
