@@ -1,5 +1,4 @@
 use rtdlib::types as rtd_types;
-use rtdlib::types::{RObject, Update, Error};
 
 use crate::api::Api;
 use crate::listener::{Listener, Lout};
