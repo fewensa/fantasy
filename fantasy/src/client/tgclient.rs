@@ -8,8 +8,8 @@ use tera::Context;
 
 use tl_parser::types::TLTokenGroup;
 
-use crate::Cycle;
-use crate::tokenwrap::TokenWrap;
+use crate::client::Cycle;
+use crate::client::tokenwrap::TokenWrap;
 
 pub struct TGClient<'a> {
   cycle: &'a Cycle,

@@ -8,8 +8,8 @@ use tera::Tera;
 
 use tl_parser::types::{TLTokenArgType, TLTokenComponentType, TLTokenGroup};
 
-use crate::tdfill::TDTypeFill;
-use crate::tokenwrap::TokenWrap;
+use crate::client::tdfill::TDTypeFill;
+use crate::client::tokenwrap::TokenWrap;
 
 pub fn fill(tera: &mut Tera, tknwrap: TokenWrap) -> Result<(), failure::Error> {
   self::add_filter_case(tera)?;

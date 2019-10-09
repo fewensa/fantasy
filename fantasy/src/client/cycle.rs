@@ -5,7 +5,7 @@ use tera::{Context, Tera};
 
 use tl_parser::types::TLTokenGroup;
 
-use crate::TokenWrap;
+use crate::client::TokenWrap;
 
 /// fantasy config
 #[derive(Debug, Clone, TypedBuilder)]

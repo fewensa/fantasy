@@ -2,7 +2,7 @@ use case::CaseExt;
 
 use tl_parser::types::*;
 
-use crate::tdfill::TDTypeFill;
+use crate::client::tdfill::TDTypeFill;
 
 lazy_static! {
   static ref SKIP_TYPES: Vec<&'static str> = {
