@@ -24,8 +24,6 @@ pub fn generate() {
   simple_logger::init().unwrap();
   log::set_max_level(log::LevelFilter::Debug);
 
-  let a= vec![];
-
   let project_path = Path::new("./");
 
   let tdtypefill = tdfill::TDTypeFill::new(project_path.join("schema/td_type_fill.toml")).unwrap();

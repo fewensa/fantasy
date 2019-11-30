@@ -8,7 +8,7 @@ use tera::Context;
 
 use tl_parser::types::TLTokenGroup;
 
-use crate::client::Cycle;
+use crate::client::cycle::Cycle;
 use crate::client::tokenwrap::TokenWrap;
 
 pub struct TGClient<'a> {
@@ -30,7 +30,7 @@ impl<'a> TGClient<'a> {
       return bail!("RTD template path is not dir -> {:?}", path_template);
     }
 
-    self.clearance();
+    self.clearance()?;
 
     // move root path file
     self.copy_file_to(&path_template, config.path_telegram_client())?;
