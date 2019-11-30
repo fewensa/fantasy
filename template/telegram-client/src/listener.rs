@@ -8,13 +8,13 @@ use crate::api::Api;
 /// Telegram client event listener
 #[derive(Clone, Default)]
 pub struct Listener {
-  exception: Option<Arc<Fn((&Api, &TGError)) + Send + Sync + 'static>>,
-  receive: Option<Arc<Fn((&Api, &String)) -> TGResult<()> + Send + Sync + 'static>>,
+  exception: Option<Arc<dyn Fn((&Api, &TGError)) + Send + Sync + 'static>>,
+  receive: Option<Arc<dyn Fn((&Api, &String)) -> TGResult<()> + Send + Sync + 'static>>,
 
-{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}  {{name | to_snake}}: Option<Arc<Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}  {{name | to_snake}}: Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
 {% endfor %}
 
-{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name | td_remove_prefix(prefix='Update') | to_snake}}: Option<Arc<Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name | td_remove_prefix(prefix='Update') | to_snake}}: Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
 {% endif %}{% endfor %}
 
 }
@@ -86,18 +86,18 @@ impl Lout {
   }
 
   /// when telegram client throw exception
-  pub fn exception(&self) -> &Option<Arc<Fn((&Api, &TGError)) + Send + Sync + 'static>> {
+  pub fn exception(&self) -> &Option<Arc<dyn Fn((&Api, &TGError)) + Send + Sync + 'static>> {
     &self.listener.exception
   }
 
   /// when receive data from tdlib
-  pub fn receive(&self) -> &Option<Arc<Fn((&Api, &String)) -> TGResult<()> + Send + Sync + 'static>> {
+  pub fn receive(&self) -> &Option<Arc<dyn Fn((&Api, &String)) -> TGResult<()> + Send + Sync + 'static>> {
     &self.listener.receive
   }
 
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
   /// {{token.description}}
-  pub fn {{name | to_snake}}(&self) -> &Option<Arc<Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
+  pub fn {{name | to_snake}}(&self) -> &Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
     &self.listener.{{name | to_snake}}
   }
 {% endfor %}
@@ -105,7 +105,7 @@ impl Lout {
 
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
   /// {{token.description}}
-  pub fn {{token.name | td_remove_prefix(prefix='Update') | to_snake}}(&self) -> &Option<Arc<Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
+  pub fn {{token.name | td_remove_prefix(prefix='Update') | to_snake}}(&self) -> &Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
     &self.listener.{{token.name | td_remove_prefix(prefix='Update') | to_snake}}
   }
 {% endif %}{% endfor %}

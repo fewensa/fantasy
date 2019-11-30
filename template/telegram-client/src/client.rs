@@ -1,9 +1,7 @@
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Receiver;
+use std::thread::JoinHandle;
 
-use daemon::Daemon;
-use daemon::DaemonRunner;
-use daemon::State;
 use rtdlib::tdjson;
 
 use crate::api::Api;

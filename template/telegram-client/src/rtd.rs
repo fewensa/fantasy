@@ -1,6 +1,7 @@
 use core::borrow::Borrow;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::thread::JoinHandle;
 
 use crate::api::Api;
 use crate::handler::Handler;

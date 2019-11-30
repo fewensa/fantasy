@@ -158,9 +158,7 @@ file id:int32 size:int32 expected_size:int32 local:localFile remote:remoteFile =
 //@description A file defined by its unique ID @id Unique file identifier
 inputFileId id:int32 = InputFile;
 
-//@description A file defined by its remote ID. The remote ID is guaranteed to work only if it was received after TDLib launch and the corresponding file is still accessible to the user.
-//-For example, if the file is from a message, then the message must be not deleted and accessible to the user. If a file database is disabled, then the corresponding object with the file must be preloaded by the client
-//@id Remote file identifier
+//@description A file defined by its remote ID @id Remote file identifier
 inputFileRemote id:string = InputFile;
 
 //@description A file defined by a local path @path Local path to the file
@@ -210,7 +208,7 @@ pollOption text:string voter_count:int32 vote_percentage:int32 is_chosen:Bool is
 //@minithumbnail Animation minithumbnail; may be null @thumbnail Animation thumbnail; may be null @animation File containing the animation
 animation duration:int32 width:int32 height:int32 file_name:string mime_type:string minithumbnail:minithumbnail thumbnail:photoSize animation:file = Animation;
 
-//@description Describes an audio file. Audio is usually in MP3 or M4A format @duration Duration of the audio, in seconds; as defined by the sender @title Title of the audio; as defined by the sender @performer Performer of the audio; as defined by the sender
+//@description Describes an audio file. Audio is usually in MP3 format @duration Duration of the audio, in seconds; as defined by the sender @title Title of the audio; as defined by the sender @performer Performer of the audio; as defined by the sender
 //@file_name Original name of the file; as defined by the sender @mime_type The MIME type of the file; as defined by the sender @album_cover_minithumbnail The minithumbnail of the album cover; may be null @album_cover_thumbnail The thumbnail of the album cover; as defined by the sender. The full size thumbnail should be extracted from the downloaded file; may be null @audio File containing the audio
 audio duration:int32 title:string performer:string file_name:string mime_type:string album_cover_minithumbnail:minithumbnail album_cover_thumbnail:photoSize audio:file = Audio;
 
@@ -226,7 +224,7 @@ photo has_stickers:Bool minithumbnail:minithumbnail sizes:vector<photoSize> = Ph
 sticker set_id:int64 width:int32 height:int32 emoji:string is_animated:Bool is_mask:Bool mask_position:maskPosition thumbnail:photoSize sticker:file = Sticker;
 
 //@description Describes a video file @duration Duration of the video, in seconds; as defined by the sender @width Video width; as defined by the sender @height Video height; as defined by the sender
-//@file_name Original name of the file; as defined by the sender @mime_type MIME type of the file; as defined by the sender @has_stickers True, if stickers were added to the video
+//@file_name Original name of the file; as defined by the sender @mime_type MIME type of the file; as defined by the sender @has_stickers True, if stickers were added to the photo
 //@supports_streaming True, if the video should be tried to be streamed @minithumbnail Video minithumbnail; may be null @thumbnail Video thumbnail; as defined by the sender; may be null @video File containing the video
 video duration:int32 width:int32 height:int32 file_name:string mime_type:string has_stickers:Bool supports_streaming:Bool minithumbnail:minithumbnail thumbnail:photoSize video:file = Video;
 
@@ -731,8 +729,8 @@ richTextStrikethrough text:RichText = RichText;
 //@description A fixed-width rich text @text Text
 richTextFixed text:RichText = RichText;
 
-//@description A rich text URL link @text Text @url URL @is_cached True, if the URL has cached instant view server-side
-richTextUrl text:RichText url:string is_cached:Bool = RichText;
+//@description A rich text URL link @text Text @url URL
+richTextUrl text:RichText url:string = RichText;
 
 //@description A rich text email link @text Text @email_address Email address
 richTextEmailAddress text:RichText email_address:string = RichText;
@@ -789,7 +787,7 @@ pageBlockVerticalAlignmentMiddle = PageBlockVerticalAlignment;
 //@description The content should be bottom-aligned
 pageBlockVerticalAlignmentBottom = PageBlockVerticalAlignment;
 
-//@description Represents a cell of a table @text Cell text; may be null. If the text is null, then the cell should be invisible @is_header True, if it is a header cell
+//@description Represents a cell of a table @text Cell text @is_header True, if it is a header cell
 //@colspan The number of columns the cell should span @rowspan The number of rows the cell should span
 //@align Horizontal cell content alignment @valign Vertical cell content alignment
 pageBlockTableCell text:RichText is_header:Bool colspan:int32 rowspan:int32 align:PageBlockHorizontalAlignment valign:PageBlockVerticalAlignment = PageBlockTableCell;
@@ -854,9 +852,6 @@ pageBlockPhoto photo:photo caption:pageBlockCaption url:string = PageBlock;
 
 //@description A video @video Video file; may be null @caption Video caption @need_autoplay True, if the video should be played automatically @is_looped True, if the video should be looped
 pageBlockVideo video:video caption:pageBlockCaption need_autoplay:Bool is_looped:Bool = PageBlock;
-
-//@description A voice note @voice_note Voice note; may be null @caption Voice note caption
-pageBlockVoiceNote voice_note:voiceNote caption:pageBlockCaption = PageBlock;
 
 //@description A page cover @cover Cover
 pageBlockCover cover:PageBlock = PageBlock;
@@ -1829,13 +1824,6 @@ gameHighScore position:int32 user_id:int32 score:int32 = GameHighScore;
 gameHighScores scores:vector<gameHighScore> = GameHighScores;
 
 
-//@description Contains the response of a request to TON lite server @response The response
-tonLiteServerResponse response:bytes = TonLiteServerResponse;
-
-//@description Contains the salt to be used with locally stored password to access a local TON-based wallet @salt The salt
-tonWalletPasswordSalt salt:bytes = TonWalletPasswordSalt;
-
-
 //@class ChatEventAction @description Represents a chat event
 
 //@description A message was edited @old_message The original message before the edit @new_message The message after it was edited
@@ -2167,9 +2155,8 @@ notificationGroupTypeSecretChat = NotificationGroupType;
 notificationGroupTypeCalls = NotificationGroupType;
 
 
-//@description Contains information about a notification @id Unique persistent identifier of this notification @date Notification date
-//@is_silent True, if the notification was initially silent @type Notification type
-notification id:int32 date:int32 is_silent:Bool type:NotificationType = Notification;
+//@description Contains information about a notification @id Unique persistent identifier of this notification @date Notification date @type Notification type
+notification id:int32 date:int32 type:NotificationType = Notification;
 
 //@description Describes a group of notifications @id Unique persistent auto-incremented from 1 identifier of the notification group @type Type of the group
 //@chat_id Identifier of a chat to which all notifications in the group belong
@@ -2604,7 +2591,7 @@ updateChatPhoto chat_id:int53 photo:chatPhoto = Update;
 //@description Chat permissions was changed @chat_id Chat identifier @permissions The new chat permissions
 updateChatPermissions chat_id:int53 permissions:chatPermissions = Update;
 
-//@description The last message of a chat was changed. If last_message is null, then the last message in the chat became unknown. Some new unknown messages might be added to the chat in this case @chat_id Chat identifier @last_message The new last message in the chat; may be null @order New value of the chat order
+//@description The last message of a chat was changed. If last_message is null then the last message in the chat became unknown. Some new unknown messages might be added to the chat in this case @chat_id Chat identifier @last_message The new last message in the chat; may be null @order New value of the chat order
 updateChatLastMessage chat_id:int53 last_message:message order:int64 = Update;
 
 //@description The order of the chat in the chat list has changed. Instead of this update updateChatLastMessage, updateChatIsPinned or updateChatDraftMessage might be sent @chat_id Chat identifier @order New value of the order
@@ -2969,9 +2956,7 @@ getMessages chat_id:int53 message_ids:vector<int53> = Messages;
 //@description Returns information about a file; this is an offline request @file_id Identifier of the file to get
 getFile file_id:int32 = File;
 
-//@description Returns information about a file by its remote ID; this is an offline request. Can be used to register a URL as a file for further uploading, or sending as a message. Even the request succeeds, the file can be used only if it is still accessible to the user.
-//-For example, if the file is from a message, then the message must be not deleted and accessible to the user. If a file database is disabled, then the corresponding object with the file must be preloaded by the client
-//@remote_file_id Remote identifier of the file to get @file_type File type, if known
+//@description Returns information about a file by its remote ID; this is an offline request. Can be used to register a URL as a file for further uploading, or sending as a message @remote_file_id Remote identifier of the file to get @file_type File type, if known
 getRemoteFile remote_file_id:string file_type:FileType = File;
 
 //@description Returns an ordered list of chats. Chats are sorted by the pair (order, chat_id) in decreasing order. (For example, to get a list of chats from the beginning, the offset_order should be equal to a biggest signed 64-bit number 9223372036854775807 == 2^63 - 1).
@@ -3962,13 +3947,6 @@ sendCustomRequest method:string parameters:string = CustomRequestResult;
 answerCustomQuery custom_query_id:int64 data:string = Ok;
 
 
-//@description Sends a request to TON lite server through Telegram servers @request The request
-sendTonLiteServerRequest request:bytes = TonLiteServerResponse;
-
-//@description Returns a salt to be used with locally stored password to access a local TON-based wallet
-getTonWalletPasswordSalt = TonWalletPasswordSalt;
-
-
 //@description Succeeds after a specified amount of time has passed. Can be called before authorization. Can be called before initialization @seconds Number of seconds before the function returns
 setAlarm seconds:double = Ok;
 
@@ -4062,8 +4040,7 @@ testSquareInt x:int32 = TestInt;
 //@description Sends a simple network request to the Telegram servers; for testing only. Can be called before authorization
 testNetwork = Ok;
 //@description Sends a simple network request to the Telegram servers via proxy; for testing only. Can be called before authorization @server Proxy server IP address @port Proxy server port @type Proxy type
-//@dc_id Identifier of a datacenter, with which to test connection @timeout Maximum overall timeout for the request
-testProxy server:string port:int32 type:ProxyType dc_id:int32 timeout:double = Ok;
+testProxy server:string port:int32 type:ProxyType = Ok;
 //@description Forces an updates.getDifference call to the Telegram servers; for testing only
 testGetDifference = Ok;
 //@description Does nothing and ensures that the Update object is used; for testing only. This is an offline method. Can be called before authorization
