@@ -64,6 +64,8 @@ fn add_filter_td(tera: &mut Tera) -> Result<(), failure::Error> {
     match value.as_str() {
       Some(text) => match text {
         "type" => Ok(serde_json::value::to_value("type_".to_string()).unwrap()),
+        "async" => Ok(serde_json::value::to_value("async_".to_string()).unwrap()),
+        "static" => Ok(serde_json::value::to_value("static_".to_string()).unwrap()),
         _ => Ok(serde_json::value::to_value(text.to_snake()).unwrap())
       },
       None => Err(format!("Error value {:?}", value).into())

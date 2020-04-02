@@ -10,6 +10,7 @@ boolFalse = "bool"
 boolTrue = "bool"
 Bool = "bool"
 vector = "Vec"
+Vector = "Vec"
 
 
 [filter]
@@ -180,6 +181,23 @@ reason = "recursive type"
 
 [filter.RichTexts]
 [filter.RichTexts.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextReference]
+[filter.RichTextReference.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextReference.reference_text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextAnchorLink]
+[filter.RichTextAnchorLink.text]
 sign_type = "Box<RichText>"
 optional = false
 reason = "recursive type"
