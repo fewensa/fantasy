@@ -14,10 +14,11 @@ pub struct Listener {
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}  {{name | to_snake}}: Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
 {% endfor %}
 
-{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name | td_remove_prefix(prefix='Update') | to_snake}}: Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
-{% elif token.is_return_type %}  result_{{token.name | to_snake}}: Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name  | to_snake}}: Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
 {% endif %}{% endfor %}
 
+{% for token in tokens %}{% if token.is_return_type %}  {{token.name | to_snake}}: Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>>,
+{% endif %}{% endfor %}
 }
 
 
@@ -53,16 +54,18 @@ impl Listener {
 
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
   /// {{token.description}}
-  pub fn on_{{token.name | td_remove_prefix(prefix='Update') | to_snake}}<F>(&mut self, fnc: F) -> &mut Self
+  pub fn on_{{token.name  | to_snake}}<F>(&mut self, fnc: F) -> &mut Self
     where F: Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static {
-    self.{{token.name | td_remove_prefix(prefix='Update') | to_snake}} = Some(Arc::new(fnc));
+    self.{{token.name  | to_snake}} = Some(Arc::new(fnc));
     self
   }
-{% elif token.is_return_type %}
+{% endif %}{% endfor %}
+
+{% for token in tokens %}{% if token.is_return_type %}
   /// {{token.description}}
-  pub fn on_result_{{token.name | to_snake}}<F>(&mut self, fnc: F) -> &mut Self
+  pub fn on_{{token.name | to_snake}}<F>(&mut self, fnc: F) -> &mut Self
     where F: Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static {
-    self.result_{{token.name | to_snake}} = Some(Arc::new(fnc));
+    self.{{token.name | to_snake}} = Some(Arc::new(fnc));
     self
   }
 {% endif %}{% endfor %}
@@ -83,6 +86,10 @@ impl Lout {
 
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}      "{{token.name}}",
 {% endif %}{% endfor %}
+
+{% for token in tokens %}{% if token.is_return_type %}      "{{token.name}}",
+{% endif %}{% endfor %}
+
     ];
     Self { listener, supports }
   }
@@ -113,15 +120,18 @@ impl Lout {
 
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
   /// {{token.description}}
-  pub fn {{token.name | td_remove_prefix(prefix='Update') | to_snake}}(&self) -> &Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
-    &self.listener.{{token.name | td_remove_prefix(prefix='Update') | to_snake}}
-  }
-{% elif token.is_return_type %}
-  /// {{token.description}}
-  pub fn result_{{token.name | to_snake}}(&self) -> &Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
-    &self.listener.result_{{token.name | to_snake}}
+  pub fn {{token.name  | to_snake}}(&self) -> &Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
+    &self.listener.{{token.name  | to_snake}}
   }
 {% endif %}{% endfor %}
+
+{% for token in tokens %}{% if token.is_return_type %}
+  /// {{token.description}}
+  pub fn {{token.name | to_snake}}(&self) -> &Option<Arc<dyn Fn((&Api, &{{token.name | to_camel}})) -> TGResult<()> + Send + Sync + 'static>> {
+    &self.listener.{{token.name | to_snake}}
+  }
+{% endif %}{% endfor %}
+
 }
 
 

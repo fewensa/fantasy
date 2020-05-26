@@ -65,7 +65,15 @@ pub fn token_group(grammars: &Vec<Box<TLGrammar>>) -> Result<Vec<TLTokenGroup>, 
     }
   }
 
-  Ok(tokens.into_iter().map(|(_, token_group)| token_group ).collect())
+  let mut arrs: Vec<(&String, &TLTokenGroup)> = tokens.iter().collect();
+  arrs.sort_by(|a, b| a.0.cmp(b.0));
+  let rets: Vec<TLTokenGroup> = arrs.into_iter()
+    .map(|(_, token_group)| token_group.clone())
+    .collect();
+  // for x in &rets {
+  //   println!("{}", x.name);
+  // }
+  Ok(rets)
 }
 
 
