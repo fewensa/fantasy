@@ -43,6 +43,9 @@ pub struct TLTokenGroup {
   ///      type is trait, blood is none
   ///      type is function, blood is return type
   pub(crate) blood: Option<String>,
+  /// when type is struct, this may be true to
+  /// indicate this can be returned be a function
+  pub(crate) is_return_type: bool
 }
 
 impl TLTokenGroup {
@@ -52,6 +55,7 @@ impl TLTokenGroup {
   pub fn arguments       (&self) -> Vec<TLTokenArgType>            { self.arguments      .clone() }
   pub fn type_           (&self) -> TLTokenGroupType               { self.type_          .clone() }
   pub fn blood           (&self) -> Option<String>                 { self.blood          .clone() }
+  pub fn is_return_type  (&self) -> bool                           { self.is_return_type .clone() }
 }
 
 impl TLTokenArgType {

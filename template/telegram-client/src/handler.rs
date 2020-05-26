@@ -63,7 +63,9 @@ impl<'a> Handler<'a> {
     match &td_type[..] {
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
       "{{token.name}}" => event_handler!({{token.name | td_remove_prefix(prefix='Update') | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json),
-{% endif %}{% endfor %}
+    {% elif token.is_return_type %}
+      "{{token.name}}" => event_handler!(result_{{token.name | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json),
+    {% endif %}{% endfor %}
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
       "{{token.name | to_snake | to_camel_lowercase}}" => event_handler!({{name | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json),
 {% endfor %}
