@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use failure::Error;
 use rstring_builder::StringBuilder;
@@ -7,14 +7,35 @@ use text_reader::TextReader;
 use crate::types::*;
 
 pub fn token_group(grammars: &Vec<Box<TLGrammar>>) -> Result<Vec<TLTokenGroup>, Error> {
-  let mut tokens = vec![];
+  let mut tokens : HashMap<String, TLTokenGroup> = HashMap::new();
+  let mut return_types: HashSet<String> = HashSet::new();
+  let mut super_types_to_types: HashMap<String, Vec<String>> = HashMap::new();
 
   let mut token_group_type = TLTokenGroupType::Struct;
   for grammar in grammars {
     if grammar.is_group() {
       let group: TLGroup = grammar.to_group().expect("Impossible error");
       let token_group = parse_token_group(&group, token_group_type.clone())?;
-      tokens.push(token_group);
+
+      if let (Some(return_type), TLTokenGroupType::Function) = (&token_group.blood, &token_group.type_) {
+        if let Some(token) = tokens.get_mut(return_type) {
+          (*token).is_return_type = true;
+        }
+        else {
+          return_types.insert(return_type.clone());
+        }
+      }
+
+      if let (Some(super_type), TLTokenGroupType::Struct) = (&token_group.blood, &token_group.type_) {
+        if let Some(child_types) = super_types_to_types.get_mut(super_type) {
+          child_types.push(token_group.name.clone());
+        }
+        else {
+          super_types_to_types.insert(super_type.clone(), vec![token_group.name.clone()]);
+        }
+      }
+
+      tokens.insert(token_group.name.clone(), token_group);
     }
     if grammar.is_paragraph() {
       let paragraph: TLParagraph = grammar.to_paragraph().expect("Impossible error");
@@ -27,7 +48,24 @@ pub fn token_group(grammars: &Vec<Box<TLGrammar>>) -> Result<Vec<TLTokenGroup>, 
     }
   }
 
-  Ok(tokens)
+  for return_type in return_types.iter() {
+    if let Some(token) = tokens.get_mut(return_type) {
+      (*token).is_return_type = true;
+    }
+    else if let Some(child_tokens) = super_types_to_types.get(return_type) {
+      match child_tokens.len() {
+        1 => {
+          let token_name = child_tokens.first().unwrap();
+          if let Some(token_group) = tokens.get_mut(token_name) {
+            (*token_group).is_return_type = true;
+          }
+        },
+        _ => debug!("Skipping candidate return type {} because it is a super type with multiple children.", return_type)
+      }
+    }
+  }
+
+  Ok(tokens.into_iter().map(|(_, token_group)| token_group ).collect())
 }
 
 
@@ -42,6 +80,7 @@ fn parse_token_group(group: &TLGroup, token_group_type: TLTokenGroupType) -> Res
     arguments: Default::default(),
     type_: token_group_type,
     blood: None,
+    is_return_type: false
   };
 
   // description builder
@@ -88,6 +127,7 @@ fn group_trait(gl: &TLGroupLine) -> Result<TLTokenGroup, Error> {
     arguments: Default::default(),
     type_: TLTokenGroupType::Trait,
     blood: None,
+    is_return_type: false
   };
 
   let description_map = tl_description_map(gl.text.clone());
