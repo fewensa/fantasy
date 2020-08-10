@@ -92,6 +92,56 @@ sample
 "supergroup_full_info":{"sticker_set_id": "0", ... }
 """
 
+[filter.ChatPosition]
+[filter.ChatPosition.order]
+sign_type = "String"
+optional = false
+reason = """
+issue https://github.com/fewensa/telegram-client/issues/16
+the master branch of td, not have order field in  UpdateChatDraftMessage, It's ChatPosition
+  2020-08-10
+"""
+
+[filter.UpdateChatDraftMessage]
+[filter.UpdateChatDraftMessage.order]
+sign_type = "String"
+optional = false
+reason = """
+issue https://github.com/fewensa/telegram-client/issues/16
+the master branch of td, not have order field in  UpdateChatDraftMessage, It's ChatPosition
+  2020-08-10
+"""
+
+[filter.UpdateChatIsPinned]
+[filter.UpdateChatIsPinned.order]
+sign_type = "String"
+optional = false
+reason = """
+issue https://github.com/fewensa/telegram-client/issues/16
+the master branch of td, not have UpdateChatIsPinned
+  2020-08-10
+"""
+
+[filter.UpdateChatIsSponsored]
+[filter.UpdateChatIsSponsored.order]
+sign_type = "String"
+optional = false
+reason = """
+issue https://github.com/fewensa/telegram-client/issues/16
+the master branch of td, not have UpdateChatIsSponsored
+  2020-08-10
+"""
+
+[filter.UpdateChatOrder]
+[filter.UpdateChatOrder.order]
+sign_type = "String"
+optional = false
+reason = """
+issue https://github.com/fewensa/telegram-client/issues/16
+the master branch of td, not have UpdateChatIsSponsored
+  2020-08-10
+"""
+
 
 
 [filter.PageBlockCover]
