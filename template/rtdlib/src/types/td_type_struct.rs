@@ -6,7 +6,7 @@ pub struct {{struct_name}} {
   #[serde(rename(serialize = "@type", deserialize = "@type"))]
   td_name: String,
   {% for field in token.arguments %}/// {{field.description}}
-  {% if field.sign_name == 'type' %}#[serde(rename(serialize = "type", deserialize = "type"))] {% endif %}{{field.sign_name | td_safe_field}}: {{td_arg(arg=field, token=token)}},
+  {% for macro_ in td_macros(arg=field, token=token) %}{{macro_}} {% endfor %}{% if field.sign_name == 'type' %}#[serde(rename(serialize = "type", deserialize = "type"))] {% endif %}{{field.sign_name | td_safe_field}}: {{td_arg(arg=field, token=token)}},
   {% endfor %}
 }
 

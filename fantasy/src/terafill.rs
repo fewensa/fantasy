@@ -107,6 +107,30 @@ fn add_td_fnc(tera: &mut Tera, tknwrap: TokenWrap) -> Result<(), failure::Error>
   let tknwrap0 = tknwrap.clone();
   let tknwrap1 = tknwrap.clone();
   let tknwrap2 = tknwrap.clone();
+  let tknwrap3 = tknwrap.clone();
+
+  // argument serde_aux field_attributes
+  let td_macros = Box::new(move |argument: HashMap<String, Value>| -> tera::Result<Value> {
+    let tdtypefill = tknwrap3.tdtypefill();
+
+    let token: TLTokenGroup = match argument.get("token") {
+      Some(t) => match serde_json::from_value(t.clone()) {
+        Ok(a) => a,
+        Err(e) => return Err("Can't covert token to TLTokenGroup".into())
+      },
+      None => return Err("Can't found token".into())
+    };
+    let arg: TLTokenArgType = match argument.get("arg") {
+      Some(t) => match serde_json::from_value(t.clone()) {
+        Ok(a) => a,
+        Err(e) => return Err("Can't covert arg to TLTokenArgType".into())
+      },
+      None => return Err("Can't found arg".into())
+    };
+
+    let aux = tdtypefill.td_filter_macros(token.name(), arg.sign_name());
+    Ok(serde_json::value::to_value(aux).unwrap())
+  });
 
   // argument type
   let td_arg = Box::new(move |argument: HashMap<String, Value>| -> tera::Result<Value> {
@@ -236,6 +260,7 @@ fn add_td_fnc(tera: &mut Tera, tknwrap: TokenWrap) -> Result<(), failure::Error>
   });
 
   tera.register_function("td_arg", td_arg);
+  tera.register_function("td_macros", td_macros);
   tera.register_function("sub_tokens", sub_tokens);
   tera.register_function("find_token", find_token);
   tera.register_function("is_primitive", is_primitive);

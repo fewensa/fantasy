@@ -17,7 +17,9 @@ Vector = "Vec"
 
 [filter.ProfilePhoto]
 [filter.ProfilePhoto.id]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 On the telegram api document website, this type is std::int64_t   https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1profile_photo.html,
@@ -30,7 +32,9 @@ if use Option<i64> serde_json deserialize will throw error.
 
 [filter.Chat]
 [filter.Chat.order]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1chat.html
@@ -42,7 +46,9 @@ sample
 
 [filter.Message]
 [filter.Message.media_album_id]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1message.html
@@ -53,7 +59,9 @@ sample
 
 [filter.UpdateChatLastMessage]
 [filter.UpdateChatLastMessage.order]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1update_chat_last_message.html
@@ -64,7 +72,9 @@ sample
 
 [filter.Poll]
 [filter.Poll.id]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1poll.html
@@ -74,7 +84,9 @@ sample
 
 [filter.Sticker]
 [filter.Sticker.set_id]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1sticker.html
@@ -84,7 +96,9 @@ sample
 
 [filter.SupergroupFullInfo]
 [filter.SupergroupFullInfo.sticker_set_id]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 https://core.telegram.org/tdlib/docs/classtd_1_1td__api_1_1supergroup_full_info.html
@@ -94,7 +108,9 @@ sample
 
 [filter.ChatPosition]
 [filter.ChatPosition.order]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 issue https://github.com/fewensa/telegram-client/issues/16
@@ -104,7 +120,9 @@ the master branch of td, not have order field in  UpdateChatDraftMessage, It's C
 
 [filter.UpdateChatDraftMessage]
 [filter.UpdateChatDraftMessage.order]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 issue https://github.com/fewensa/telegram-client/issues/16
@@ -114,7 +132,9 @@ the master branch of td, not have order field in  UpdateChatDraftMessage, It's C
 
 [filter.UpdateChatIsPinned]
 [filter.UpdateChatIsPinned.order]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 issue https://github.com/fewensa/telegram-client/issues/16
@@ -124,7 +144,9 @@ the master branch of td, not have UpdateChatIsPinned
 
 [filter.UpdateChatIsSponsored]
 [filter.UpdateChatIsSponsored.order]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 issue https://github.com/fewensa/telegram-client/issues/16
@@ -134,7 +156,9 @@ the master branch of td, not have UpdateChatIsSponsored
 
 [filter.UpdateChatOrder]
 [filter.UpdateChatOrder.order]
-sign_type = "String"
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
 optional = false
 reason = """
 issue https://github.com/fewensa/telegram-client/issues/16
@@ -251,6 +275,12 @@ reason = "recursive type"
 sign_type = "Box<RichText>"
 optional = false
 reason = "recursive type"
+
+[filter.Messages]
+[filter.Messages.messages]
+sign_type = "Vec<Option<Message>>"
+optional = false
+reason = "fix the issue: https://github.com/fewensa/telegram-client/issues/17"
 
 
 
