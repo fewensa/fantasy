@@ -59,6 +59,6 @@ fn main() {
     .renderer(renderer)
     .build();
 
-  // RTD::new(&cycle).generate().unwrap();
+  RTD::new(&cycle).generate().unwrap();
   TGClient::new(&cycle).generate().unwrap();
 }
