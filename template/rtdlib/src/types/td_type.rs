@@ -1,6 +1,7 @@
 {% if first_write %}
 use crate::types::*;
 use crate::errors::*;
+use uuid;
 {% endif %}
 
 {% if token.type_ == "Trait" %}

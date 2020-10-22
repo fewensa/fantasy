@@ -30,7 +30,7 @@ impl<'a> TGClient<'a> {
       return bail!("RTD template path is not dir -> {:?}", path_template);
     }
 
-    self.clearance();
+    self.clearance()?;
 
     // move root path file
     self.copy_file_to(&path_template, config.path_telegram_client())?;
@@ -43,11 +43,13 @@ impl<'a> TGClient<'a> {
 
   fn clearance(&self) -> Result<(), failure::Error> {
     let base_dir = self.cycle.config().path_telegram_client();
-    let path_src = base_dir.join("src");
-    if path_src.exists() {
-      std::fs::remove_dir_all(&path_src)?;
+    for dir in vec!["src", "src/api"] {
+      let path_src = base_dir.join(dir);
+      if path_src.exists() {
+        std::fs::remove_dir_all(&path_src)?;
+      }
+      std::fs::create_dir_all(&path_src)?;
     }
-    std::fs::create_dir_all(&path_src)?;
     Ok(())
   }
 
@@ -147,8 +149,11 @@ impl<'a> TGClient<'a> {
     let tokens = tknwrap.tokens();
     context.insert("tokens", tokens);
 
-    self.cycle.renderer().render("telegram-client/src/api.rs",
-                                 config.path_telegram_client().join("src/api.rs"),
+    self.cycle.renderer().render("telegram-client/src/api/aasync.rs",
+                                 config.path_telegram_client().join("src/api/aasync.rs"),
+                                 &mut context)?;
+    self.cycle.renderer().render("telegram-client/src/api/aevent.rs",
+                                 config.path_telegram_client().join("src/api/aevent.rs"),
                                  &mut context)?;
     Ok(())
   }
@@ -164,6 +169,9 @@ impl<'a> TGClient<'a> {
       (path_template.join("src/rtd.rs"), base_dir.join("src/rtd.rs")),
       (path_template.join("src/tip.rs"), base_dir.join("src/tip.rs")),
       (path_template.join("src/errors.rs"), base_dir.join("src/errors.rs")),
+      (path_template.join("src/observer.rs"), base_dir.join("src/observer.rs")),
+      (path_template.join("src/api/mod.rs"), base_dir.join("src/api/mod.rs")),
+      (path_template.join("src/api/api.rs"), base_dir.join("src/api/api.rs")),
     ];
 
     for (from, to) in wait_copies {

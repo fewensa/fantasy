@@ -64,16 +64,19 @@ macro_rules! rtd_enum_deserialize {
 //  };
 //}
 
-pub fn detect_td_type<S: AsRef<str>>(json: S) -> Option<String> {
+pub fn detect_td_type_and_extra<S: AsRef<str>>(json: S) -> (Option<String>, Option<String>) {
   let result: Result<serde_json::Value, serde_json::Error> = serde_json::from_str::<serde_json::Value>(json.as_ref());
-  if let Err(_) = result { return None }
+  if let Err(_) = result { return (None, None) }
   let value = result.unwrap();
-  value.as_object().map_or(None, |v| {
-    v.get("@type").map_or(None, |t| t.as_str().map_or(None, |t| {
-      Some(t.to_string())
-    }))
-  })
+  let mut type_ = None;
+  let mut extra = None;
+  if let Some(map) = value.as_object() {
+    map.get("@type").map(|v|type_.replace(v.to_string()));
+    map.get("@extra").map(|v|extra.replace(v.to_string()));
+  }
+  (type_, extra)
 }
+
 
 pub fn from_json<'a, T>(json: &'a str) -> RTDResult<T> where T: serde::de::Deserialize<'a>, {
   Ok(serde_json::from_str(json.as_ref())?)
@@ -83,6 +86,8 @@ pub fn from_json<'a, T>(json: &'a str) -> RTDResult<T> where T: serde::de::Deser
 pub trait RObject: Debug {
   #[doc(hidden)]
   fn td_name(&self) -> &'static str;
+  #[doc(hidden)]
+  fn extra(&self) -> &str;
   /// Return td type to json string
   fn to_json(&self) -> RTDResult<String>;
 }
@@ -93,11 +98,13 @@ pub trait RFunction: Debug + RObject {}
 impl<'a, RObj: RObject> RObject for &'a RObj {
   fn td_name(&self) -> &'static str { (*self).td_name() }
   fn to_json(&self) -> RTDResult<String> { (*self).to_json() }
+  fn extra(&self) -> &str { (*self).extra() }
 }
 
 impl<'a, RObj: RObject> RObject for &'a mut RObj {
   fn td_name(&self) -> &'static str { (**self).td_name() }
   fn to_json(&self) -> RTDResult<String> { (**self).to_json() }
+  fn extra(&self) -> &str { (**self).extra() }
 }
 
 
@@ -109,3 +116,8 @@ impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | t
 impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &'a mut {{token.name | upper}} {}
 {% endif %}{% endfor %}
 
+pub enum TdType {
+{% for token in tokens %}{% if token.is_return_type %}
+  {{token.name | to_camel }}({{token.name | to_camel}}),
+{% endif %}{% endfor %}
+}

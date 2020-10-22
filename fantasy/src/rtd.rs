@@ -29,7 +29,7 @@ impl<'a> RTD<'a> {
       return bail!("RTD template path is not dir -> {:?}", path_template);
     }
 
-    self.clearance();
+    self.clearance()?;
 
     // move root path file
     self.copy_file_to(&path_template, config.path_rtd())?;

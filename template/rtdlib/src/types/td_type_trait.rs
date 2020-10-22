@@ -35,6 +35,13 @@ impl RObject for {{trait_name}} {
       _ => "-1",
     }
   }
+  #[doc(hidden)] fn extra(&self) -> &str {
+    match self {
+{% for subt in sub_tokens(token=token) %}      {{trait_name}}::{{subt.name | td_remove_prefix(prefix=trait_name) | to_camel}}(t) => t.extra(),
+{% endfor %}
+      _ => "-1",
+    }
+  }
   fn to_json(&self) -> RTDResult<String> { Ok(serde_json::to_string(self)?) }
 }
 

@@ -16,7 +16,7 @@ pub struct Config {
   path_telegram_client: PathBuf,
   /// tl schema file path
   file_tl: PathBuf,
-  /// template projct path
+  /// template project path
   path_template: PathBuf,
 }
 

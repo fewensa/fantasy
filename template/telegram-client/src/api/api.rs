@@ -1,10 +1,12 @@
-use core::borrow::Borrow;
+use std::borrow::Borrow;
 use std::sync::Arc;
 
-use regex::Regex;
-use rtdlib::errors::*;
+use rtdlib::errors::RTDResult;
 use rtdlib::Tdlib;
-use rtdlib::types::*;
+use rtdlib::types::RFunction;
+
+use crate::api::aasync::AsyncApi;
+use crate::api::aevent::EventApi;
 
 #[derive(Debug, Clone)]
 pub struct ApiBuilder {
@@ -17,7 +19,7 @@ impl ApiBuilder {
       inner: Api {
         tdlib: Arc::new(Tdlib::new()),
         log: true,
-        unsafe_log: false
+        unsafe_log: false,
       }
     }
   }
@@ -26,7 +28,7 @@ impl ApiBuilder {
     self.inner.clone()
   }
 
-  fn tdlib(&mut self, tdlib: Tdlib) -> &mut Self{
+  fn tdlib(&mut self, tdlib: Tdlib) -> &mut Self {
     self.inner.tdlib = Arc::new(tdlib);
     self
   }
@@ -56,14 +58,32 @@ impl Default for Api {
   }
 }
 
-impl Api {
 
+impl Api {
   pub fn builder() -> ApiBuilder {
     ApiBuilder::new()
   }
 
   pub fn new(tdlib: Tdlib) -> Self {
     ApiBuilder::new().tdlib(tdlib).build()
+  }
+
+  pub fn event() -> EventApi {
+    Api::event_with_tdlib(Tdlib::new())
+  }
+
+  pub fn event_with_tdlib(tdlib: Tdlib) -> EventApi {
+    let api = Api::new(tdlib);
+    EventApi::new(api)
+  }
+
+  pub fn rasync() -> AsyncApi {
+    Api::rasync_with_tdlib(Tdlib::new())
+  }
+
+  pub fn rasync_with_tdlib(tdlib: Tdlib) -> AsyncApi {
+    let api = Api::new(tdlib);
+    AsyncApi::new(api)
   }
 
   #[doc(hidden)]
@@ -76,9 +96,9 @@ impl Api {
       return text.clone();
     }
     if text.contains("api_id") || text.contains("api_hash") {
-      let regex_api_id = Regex::new(r#"api_id":\d*"#).expect("Regex fail");
+      let regex_api_id = regex::Regex::new(r#"api_id":\d*"#).expect("Regex fail");
       let hide_api_id = regex_api_id.replace_all(text, r#"api_id":"****""#);
-      let regex_api_hash = Regex::new(r#"api_hash":"[0-9|a-f]*""#).expect("Regex fail");
+      let regex_api_hash = regex::Regex::new(r#"api_hash":"[0-9|a-f]*""#).expect("Regex fail");
       let hide_api_hash = regex_api_hash.replace_all(&hide_api_id, r#"api_hash":"**********""#);
       hide_api_hash.into_owned()
     } else {
@@ -112,26 +132,4 @@ impl Api {
     }
     Ok(self.tdlib.execute(&json[..]))
   }
-
-{#
-  // now don't know which function is synchronously function, so, not use this block.
-{% for token in tokens %}{% if token.type_ == 'Function' %}
-  pub fn {{token.name | to_snake}}<C: AsRef<{{token.name | to_camel}}>>(&self, {{token.name | to_snake}}: C) -> {% if token.blood and token.blood == 'Ok' %}RTDResult<{{token.blood}}>{% else %}RTDResult<()>{% endif %} {
-    {% if token.blood and token.blood == 'Ok' %}
-    match self.execute({{token.name | to_snake}}.as_ref())? {
-      Some(json) => Ok({{token.blood}}::from_json(json)?),
-      None => Err(rtdlib::errors::RTDError::custom(tip::no_data_returned_from_tdlib())),
-    }
-    {% else %}  self.send({{token.name | to_snake}}.as_ref()){% endif %}
-  }
-{% endif %}{% endfor %}
-#}
-
-{% for token in tokens %}{% if token.type_ == 'Function' %}
-  pub fn {{token.name | to_snake}}<C: AsRef<{{token.name | to_camel}}>>(&self, {{token.name | to_snake}}: C) -> RTDResult<()> {
-    self.send({{token.name | to_snake}}.as_ref())
-  }
-{% endif %}{% endfor %}
-
-
 }
