@@ -5,7 +5,6 @@ use std::thread::JoinHandle;
 
 use crate::api::Api;
 use crate::handler::Handler;
-use crate::observer::Observer;
 use crate::listener::Lout;
 
 pub struct TdRecv {}
@@ -15,12 +14,12 @@ impl TdRecv {
     Self {}
   }
 
-  pub fn start(&self, api: Arc<Api>, stop_flag: Arc<Mutex<bool>>, lout: Arc<Lout>, observer: Arc<Observer>) -> JoinHandle<()> {
+  pub fn start(&self, api: Arc<Api>, stop_flag: Arc<Mutex<bool>>, lout: Arc<Lout>) -> JoinHandle<()> {
     thread::spawn(move || {
       let is_stop = stop_flag.lock().unwrap();
       while !*is_stop {
         if let Some(json) = api.receive(2.0) {
-          Handler::new(api.borrow(), lout.borrow(), observer.borrow()).handle(&json);
+          Handler::new(api.borrow(), lout.borrow()).handle(&json);
         }
       }
     })

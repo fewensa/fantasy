@@ -5,14 +5,12 @@ use rtdlib::Tdlib;
 
 use crate::api::Api;
 use crate::listener::Listener;
-use crate::observer::Observer;
 use crate::rtd::TdRecv;
 
 pub struct Client {
   stop_flag: Arc<Mutex<bool>>,
   listener: Listener,
   api: Api,
-  observer: Observer,
 }
 
 impl Default for Client {
@@ -102,7 +100,6 @@ impl Client {
     Self {
       stop_flag,
       api,
-      observer: Observer::new(),
       listener: Listener::new(),
     }
   }
@@ -119,7 +116,7 @@ impl Client {
   pub fn start(self) -> JoinHandle<()> {
     let lout = self.listener.lout();
     let tdrecv = TdRecv::new();
-    tdrecv.start(Arc::new(self.api), self.stop_flag.clone(), Arc::new(lout), Arc::new(self.observer))
+    tdrecv.start(Arc::new(self.api), self.stop_flag.clone(), Arc::new(lout))
   }
 
   /// Start a daemon Client.

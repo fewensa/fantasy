@@ -72,34 +72,7 @@ fn add_filter_td(tera: &mut Tera) -> Result<(), failure::Error> {
     }
   }
 
-  fn td_remove_prefix(value: Value, arg: HashMap<String, Value>) -> tera::Result<Value> {
-    let prefix = match arg.get("prefix") {
-      Some(t) => t.as_str(),
-      None => None
-    };
-    match value.as_str() {
-      Some(text) => {
-        if prefix.is_none() { return Ok(serde_json::value::to_value(text.to_string()).unwrap()) }
-        let prefix = prefix.unwrap();
-        let plura_prefix = format!("{}s", prefix);
-        if plura_prefix.to_lowercase() == text.to_lowercase() {
-          return Ok(serde_json::value::to_value(text).unwrap());
-        }
-        if !text.to_lowercase().starts_with(&prefix.to_lowercase()[..]) {
-          return Ok(serde_json::value::to_value(text).unwrap());
-        }
-
-        let prefix_chars = prefix.chars().collect::<Vec<char>>();
-        let text_chars = text.chars().collect::<Vec<char>>();
-        let ret = text.chars().skip(prefix_chars.len()).take(text_chars.len()).collect::<String>();
-        Ok(serde_json::value::to_value(ret).unwrap())
-      }
-      None => Err(format!("Error value {:?}", value).into())
-    }
-  }
-
   tera.register_filter("td_safe_field", td_safe_field);
-  tera.register_filter("td_remove_prefix", td_remove_prefix);
   Ok(())
 }
 
