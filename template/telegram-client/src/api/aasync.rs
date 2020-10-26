@@ -23,7 +23,7 @@ impl AsyncApi {
   {% if token.type_ == 'Function' %}
   pub async fn {{token.name | to_snake}}<C: AsRef<{{token.name | to_camel}}>>(&self, {{token.name | to_snake}}: C) -> RTDResult<{{token.blood | to_camel}}> {
     let mut rec = subscribe({{token.name | to_snake}}.as_ref().extra().to_string());
-    self.api.send({{token.name | to_snake}}.as_ref());
+    self.api.send({{token.name | to_snake}}.as_ref())?;
     let {{token.blood | to_snake}} = rec.next().await.unwrap();
     unsubscribe({{token.name | to_snake}}.as_ref().extra());
     match {{token.blood | to_snake}} {

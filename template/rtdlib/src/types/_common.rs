@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use serde::de::{Deserialize, Deserializer};
+
 use crate::errors::*;
 use crate::types::*;
 
@@ -71,8 +73,8 @@ pub fn detect_td_type_and_extra<S: AsRef<str>>(json: S) -> (Option<String>, Opti
   let mut type_ = None;
   let mut extra = None;
   if let Some(map) = value.as_object() {
-    map.get("@type").map(|v|type_.replace(v.to_string()));
-    map.get("@extra").map(|v|extra.replace(v.to_string()));
+    map.get("@type").map(|v|v.as_str().map(|t|type_.replace(t.to_string())));
+    map.get("@extra").map(|v|v.as_str().map(|t|extra.replace(t.to_string())));
   }
   (type_, extra)
 }
@@ -120,4 +122,16 @@ pub enum TdType {
 {% for token in tokens %}{% if token.is_return_type %}
   {{token.name | to_camel }}({{token.name | to_camel}}),
 {% endif %}{% endfor %}
+}
+impl<'de> Deserialize<'de> for TdType {
+fn deserialize<D>(deserializer: D) -> Result<TdType, D::Error> where D: Deserializer<'de> {
+    use serde::de::Error;
+    rtd_enum_deserialize!(
+      TdType,
+{% for token in tokens %}{% if token.is_return_type %}
+  ({{token.name | to_camel }}, {{token.name | to_camel}});
+{% endif %}{% endfor %}
+ )(deserializer)
+
+ }
 }

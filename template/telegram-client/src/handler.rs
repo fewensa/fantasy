@@ -14,14 +14,16 @@ pub struct Handler<'a> {
 
 macro_rules! event_handler {
   ($event_name:ident, $td_type:ident) => {
-    |api: &Api, lout: &Lout, json: &String, extra: &String| {
+    |api: &Api, lout: &Lout, json: &String, extra: &Option<String>| {
       if let Some(ev) = lout.$event_name() {
         match rtd_types::from_json::<rtd_types::$td_type>(json) {
           Ok(t) => {
             if let Err(_e) = ev((api, &t)) {
               if let Some(ev) = lout.exception() { ev((api, &TGError::new("EVENT_HANDLER_ERROR"))); }
             }
-            notify(extra.to_string(), rtd_types::TdType::$td_type(t));
+            if let Some(extra) = extra {
+              notify(extra.to_string(), rtd_types::TdType::$td_type(t));
+            }
           }
           Err(e) => {
             error!("{}", tip::data_fail_with_json(json));
@@ -38,7 +40,7 @@ macro_rules! event_handler {
 
 macro_rules! update_handler {
   ($event_name:ident, $td_type:ident, $return_type:ident) => {
-    |api: &Api, lout: &Lout, json: &String, extra: &String| {
+    |api: &Api, lout: &Lout, json: &String, extra: &Option<String>| {
       if let Some(ev) = lout.$event_name() {
         let td_type = rtd_types::from_json::<$td_type>(json).unwrap();
         match rtd_types::from_json::<$return_type>(json) {
@@ -46,7 +48,9 @@ macro_rules! update_handler {
             if let Err(_e) = ev((api, &td_type)) {
               if let Some(ev) = lout.exception() { ev((api, &TGError::new("EVENT_HANDLER_ERROR"))); }
             }
-            notify(extra.to_string(), TdType::$return_type($return_type::$td_type(td_type)));
+            if let Some(extra) = extra {
+              notify(extra.to_string(), TdType::$return_type($return_type::$td_type(td_type)));
+            }
           }
           Err(e) => {
             error!("{}", tip::data_fail_with_json(json));
@@ -70,7 +74,7 @@ impl<'a> Handler<'a> {
     }
   }
 
-  pub async fn handle(&self, json: &'a String) {
+  pub fn handle(&self, json: &'a String) {
     let (td_type, extra) = match rtd_types::detect_td_type_and_extra(json) {
       (Some(t), Some(e)) => (t, Some(e)),
       (Some(t), None) => (t, None),
@@ -91,11 +95,11 @@ impl<'a> Handler<'a> {
     }
 
     match &td_type[..] {
-{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}      "{{token.name}}" => update_handler!({{token.name  | to_snake}}, {{token.name | to_camel}}, {{token.blood}})(self.api, self.lout, json, &extra.unwrap()),
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}      "{{token.name}}" => update_handler!({{token.name  | to_snake}}, {{token.name | to_camel}}, {{token.blood}})(self.api, self.lout, json, &extra),
 {% endif %}{% endfor %}
-{% for token in tokens %}{% if token.is_return_type %}      "{{token.name}}" => event_handler!({{token.name | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json, &extra.unwrap()),
+{% for token in tokens %}{% if token.is_return_type %}      "{{token.name}}" => event_handler!({{token.name | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json, &extra),
 {% endif %}{% endfor %}
-{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}      "{{token.name | to_snake | to_camel_lowercase}}" => event_handler!({{name | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json, &extra.unwrap()),
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}      "{{token.name | to_snake | to_camel_lowercase}}" => event_handler!({{name | to_snake}}, {{token.name | to_camel}})(self.api, self.lout, json, &extra),
 {% endfor %}
 
       _ => {
