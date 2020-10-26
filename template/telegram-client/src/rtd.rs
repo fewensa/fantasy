@@ -15,14 +15,25 @@ impl TdRecv {
   }
 
   pub fn start(&self, api: Arc<Api>, stop_flag: Arc<Mutex<bool>>, lout: Arc<Lout>) -> JoinHandle<()> {
-    thread::spawn(move || {
+    // thread::spawn(move || {
+    //   let is_stop = stop_flag.lock().unwrap();
+    //   let event_api = api.event_api();
+    //   while !*is_stop {
+    //     if let Some(json) = api.receive(2.0) {
+    //       Handler::new(&event_api, lout.borrow()).handle(&json);
+    //     }
+    //   }
+    // })
+
+    thread::spawn(move || futures::executor::block_on(async {
       let is_stop = stop_flag.lock().unwrap();
+      let event_api = api.event_api();
       while !*is_stop {
         if let Some(json) = api.receive(2.0) {
-          Handler::new(api.borrow(), lout.borrow()).handle(&json);
+          Handler::new(&event_api, lout.borrow()).handle(&json).await;
         }
       }
-    })
+    }))
   }
 }
 

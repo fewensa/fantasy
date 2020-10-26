@@ -64,6 +64,17 @@ macro_rules! rtd_enum_deserialize {
 //  };
 //}
 
+pub fn detect_td_type<S: AsRef<str>>(json: S) -> Option<String> {
+  let result: Result<serde_json::Value, serde_json::Error> = serde_json::from_str::<serde_json::Value>(json.as_ref());
+  if let Err(_) = result { return None }
+  let value = result.unwrap();
+  value.as_object().map_or(None, |v| {
+    v.get("@type").map_or(None, |t| t.as_str().map_or(None, |t| {
+      Some(t.to_string())
+    }))
+  })
+}
+
 pub fn detect_td_type_and_extra<S: AsRef<str>>(json: S) -> (Option<String>, Option<String>) {
   let result: Result<serde_json::Value, serde_json::Error> = serde_json::from_str::<serde_json::Value>(json.as_ref());
   if let Err(_) = result { return (None, None) }
@@ -71,12 +82,11 @@ pub fn detect_td_type_and_extra<S: AsRef<str>>(json: S) -> (Option<String>, Opti
   let mut type_ = None;
   let mut extra = None;
   if let Some(map) = value.as_object() {
-    map.get("@type").map(|v|type_.replace(v.to_string()));
-    map.get("@extra").map(|v|extra.replace(v.to_string()));
+    map.get("@type").map(|v| v.as_str().map(|t| type_.replace(t.to_string())));
+    map.get("@extra").map(|v| v.as_str().map(|t| extra.replace(t.to_string())));
   }
   (type_, extra)
 }
-
 
 pub fn from_json<'a, T>(json: &'a str) -> RTDResult<T> where T: serde::de::Deserialize<'a>, {
   Ok(serde_json::from_str(json.as_ref())?)
@@ -87,7 +97,7 @@ pub trait RObject: Debug {
   #[doc(hidden)]
   fn td_name(&self) -> &'static str;
   #[doc(hidden)]
-  fn extra(&self) -> &str;
+  fn extra(&self) -> Option<String>;
   /// Return td type to json string
   fn to_json(&self) -> RTDResult<String>;
 }
@@ -98,13 +108,13 @@ pub trait RFunction: Debug + RObject {}
 impl<'a, RObj: RObject> RObject for &'a RObj {
   fn td_name(&self) -> &'static str { (*self).td_name() }
   fn to_json(&self) -> RTDResult<String> { (*self).to_json() }
-  fn extra(&self) -> &str { (*self).extra() }
+  fn extra(&self) -> Option<String> { (*self).extra() }
 }
 
 impl<'a, RObj: RObject> RObject for &'a mut RObj {
   fn td_name(&self) -> &'static str { (**self).td_name() }
   fn to_json(&self) -> RTDResult<String> { (**self).to_json() }
-  fn extra(&self) -> &str { (**self).extra() }
+  fn extra(&self) -> Option<String> { (**self).extra() }
 }
 
 
@@ -116,8 +126,10 @@ impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | t
 impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &'a mut {{token.name | upper}} {}
 {% endif %}{% endfor %}
 
+#[derive(Debug, Clone)]
 pub enum TdType {
-{% for token in tokens %}{% if token.is_return_type %}
-  {{token.name | to_camel }}({{token.name | to_camel}}),
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name | to_camel }}({{token.name | to_camel}}),
+{% endif %}{% endfor %}
+{% for token in tokens %}{% if token.is_return_type %}  {{token.name | to_camel }}({{token.name | to_camel}}),
 {% endif %}{% endfor %}
 }

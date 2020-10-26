@@ -49,14 +49,14 @@ impl Observer {
 }
 
 
-pub fn notify(extra: String, payload: TdType) {
-  OBSERVER.notify(extra, payload)
+pub fn notify<T: AsRef<str>>(extra: T, payload: TdType) {
+  OBSERVER.notify(extra.as_ref().to_string(), payload)
 }
 
-pub fn subscribe(extra: String) -> mpsc::Receiver<TdType>{
-  OBSERVER.subscribe(extra)
+pub fn subscribe<T: AsRef<str>>(extra: T) -> mpsc::Receiver<TdType>{
+  OBSERVER.subscribe(extra.as_ref().to_string())
 }
 
-pub fn unsubscribe(extra: &str) {
-  OBSERVER.unsubscribe(extra)
+pub fn unsubscribe<T: AsRef<str>>(extra: T) {
+  OBSERVER.unsubscribe(extra.as_ref())
 }
