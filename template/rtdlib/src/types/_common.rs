@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use serde::de::{Deserialize, Deserializer};
+
 use crate::errors::*;
 use crate::types::*;
 
@@ -132,4 +134,16 @@ pub enum TdType {
 {% endif %}{% endfor %}
 {% for token in tokens %}{% if token.is_return_type %}  {{token.name | to_camel }}({{token.name | to_camel}}),
 {% endif %}{% endfor %}
+}
+impl<'de> Deserialize<'de> for TdType {
+fn deserialize<D>(deserializer: D) -> Result<TdType, D::Error> where D: Deserializer<'de> {
+    use serde::de::Error;
+    rtd_enum_deserialize!(
+      TdType,
+{% for token in tokens %}{% if token.is_return_type %}
+  ({{token.name | to_camel }}, {{token.name | to_camel}});
+{% endif %}{% endfor %}
+ )(deserializer)
+
+ }
 }

@@ -61,7 +61,6 @@ pub struct Handler<'a> {
 //   };
 // }
 
-
 impl<'a> Handler<'a> {
   pub(crate) fn new(api: &'a EventApi, lout: &'a Lout) -> Self {
     Self {
@@ -70,7 +69,7 @@ impl<'a> Handler<'a> {
     }
   }
 
-  pub async fn handle(&self, json: &'a String) {
+  pub fn handle(&self, json: &'a String) {
     let (td_type, extra) = match rtd_types::detect_td_type_and_extra(json) {
       (Some(t), Some(e)) => (t, Some(e)),
       (Some(t), None) => (t, None),

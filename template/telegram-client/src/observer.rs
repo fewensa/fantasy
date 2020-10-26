@@ -28,7 +28,7 @@ impl Observer {
   }
 
   fn subscribe(&self, extra: String) -> mpsc::Receiver<TdType> {
-    let (sender, mut receiver) = mpsc::channel::<TdType>(1);
+    let (sender, receiver) = mpsc::channel::<TdType>(1);
     match self.channels.write() {
       Ok(mut map) => {
         map.insert(extra, sender);
