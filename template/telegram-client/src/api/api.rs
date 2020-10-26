@@ -123,7 +123,7 @@ impl Api {
   pub fn send<Fnc: RFunction>(&self, fnc: Fnc) -> RTDResult<()> {
     let json = fnc.to_json()?;
     if self.log {
-      info!("===> {}", self.safe_log(&json));
+      debug!("===> {}", self.safe_log(&json));
     }
     self.tdlib.send(&json[..]);
     Ok(())
@@ -133,7 +133,7 @@ impl Api {
     let receive = self.tdlib.receive(timeout);
     if self.log {
       if receive.is_some() {
-        info!("<=== {}", receive.clone().map_or("<NONE>".to_string(), |v| self.safe_log(&v)));
+        debug!("<=== {}", receive.clone().map_or("<NONE>".to_string(), |v| self.safe_log(&v)));
       }
     }
     receive
