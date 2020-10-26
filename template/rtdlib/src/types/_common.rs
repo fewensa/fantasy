@@ -140,8 +140,9 @@ fn deserialize<D>(deserializer: D) -> Result<TdType, D::Error> where D: Deserial
     use serde::de::Error;
     rtd_enum_deserialize!(
       TdType,
-{% for token in tokens %}{% if token.is_return_type %}
-  ({{token.name | to_camel }}, {{token.name | to_camel}});
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  ({{token.name | to_camel }}, {{token.name | to_camel}});
+{% endif %}{% endfor %}
+{% for token in tokens %}{% if token.is_return_type %}  ({{token.name | to_camel }}, {{token.name | to_camel}});
 {% endif %}{% endfor %}
  )(deserializer)
 
