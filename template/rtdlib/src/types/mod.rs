@@ -2,6 +2,7 @@
 pub use self::_common::{
   RObject,
   RFunction,
+  detect_td_type,
   detect_td_type_and_extra,
   from_json,
   TdType,

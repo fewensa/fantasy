@@ -73,7 +73,10 @@ impl Api {
   }
 
   pub fn event_with_tdlib(tdlib: Tdlib) -> EventApi {
-    let api = Api::new(tdlib);
+    Api::event_with_api(Api::new(tdlib))
+  }
+
+  pub fn event_with_api(api: Api) -> EventApi {
     EventApi::new(api)
   }
 
@@ -82,8 +85,19 @@ impl Api {
   }
 
   pub fn rasync_with_tdlib(tdlib: Tdlib) -> AsyncApi {
-    let api = Api::new(tdlib);
+    Api::rasync_with_api(Api::new(tdlib))
+  }
+
+  pub fn rasync_with_api(api: Api) -> AsyncApi {
     AsyncApi::new(api)
+  }
+
+  pub fn event_api(&self) -> EventApi {
+    Api::event_with_api(self.clone())
+  }
+
+  pub fn rasync_api(&self) -> AsyncApi {
+    Api::rasync_with_api(self.clone())
   }
 
   #[doc(hidden)]
