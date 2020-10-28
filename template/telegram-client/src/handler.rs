@@ -10,6 +10,7 @@ use rtdlib::types::*;
 pub struct Handler<'a> {
   api: &'a EventApi,
   lout: &'a Lout,
+  warn_unregister_listener: &'a bool,
 }
 
 // macro_rules! event_handler {
@@ -62,10 +63,11 @@ pub struct Handler<'a> {
 // }
 
 impl<'a> Handler<'a> {
-  pub(crate) fn new(api: &'a EventApi, lout: &'a Lout) -> Self {
+  pub(crate) fn new(api: &'a EventApi, lout: &'a Lout, warn_unregister_listener: &'a bool) -> Self {
     Self {
       api,
       lout,
+      warn_unregister_listener,
     }
   }
 
@@ -102,7 +104,9 @@ impl<'a> Handler<'a> {
                 }
                 return;
               }
-              warn!("{}", tip::un_register_listener(stringify!($event_name)));
+              if *self.warn_unregister_listener {
+                warn!("{}", tip::un_register_listener(stringify!($event_name)));
+              }
             } else {
               warn!("{}", tip::not_have_listener(td_type));
             }

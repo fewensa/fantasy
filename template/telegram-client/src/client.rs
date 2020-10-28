@@ -11,6 +11,7 @@ pub struct Client {
   stop_flag: Arc<Mutex<bool>>,
   listener: Listener,
   api: Api,
+  warn_unregister_listener: bool,
 }
 
 impl Default for Client {
@@ -101,6 +102,7 @@ impl Client {
       stop_flag,
       api,
       listener: Listener::new(),
+      warn_unregister_listener: true,
     }
   }
 
@@ -116,7 +118,7 @@ impl Client {
   pub fn start(&self) -> JoinHandle<()> {
     let lout = self.listener.lout();
     let tdrecv = TdRecv::new();
-    tdrecv.start(Arc::new(self.api.clone()), self.stop_flag.clone(), Arc::new(lout))
+    tdrecv.start(Arc::new(self.api.clone()), self.stop_flag.clone(), Arc::new(lout), Arc::new(self.warn_unregister_listener))
   }
 
   /// Start a daemon Client.
@@ -150,5 +152,9 @@ impl Client {
 
   pub fn listener(&mut self) -> &mut Listener {
     &mut self.listener
+  }
+
+  pub fn warn_unregister_listener(&mut self, value: bool) {
+    self.warn_unregister_listener = value
   }
 }
