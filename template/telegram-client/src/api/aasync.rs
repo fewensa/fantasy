@@ -23,6 +23,7 @@ macro_rules! async_caller {
   }
 }
 
+#[derive(Clone)]
 pub struct AsyncApi {
   api: Api,
 }
