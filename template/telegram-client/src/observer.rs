@@ -1,7 +1,7 @@
 use std::sync::{RwLock};
 use std::collections::HashMap;
 use futures::channel::mpsc;
-use rtdlib::types::TdType;
+use rtdlib::types::{RObject, TdType};
 
 lazy_static! {
   static ref OBSERVER: Observer = {
@@ -20,10 +20,27 @@ impl Observer {
     }
   }
 
-  fn notify(&self, extra: String, payload: TdType) {
-    let mut map = self.channels.write().unwrap();
-    if let Some(sender) = map.get_mut(&extra) {
-      sender.try_send(payload).unwrap();
+  fn notify(&self, payload: TdType) {
+    let extra = match payload {
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
+      TdType::{{token.name | to_camel}}(value) => value.extra(),
+{% endfor %}
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
+      TdType::{{token.name | to_camel}}(value) => value.extra(),
+{% endif %}{% endfor %}
+{% for token in tokens %}{% if token.is_return_type %}
+      TdType::{{token.name | to_camel}}(value) => value.extra(),
+{% endif %}{% endfor %}
+
+    };
+    match extra {
+      Some(extra) => {
+        let mut map = self.channels.write().unwrap();
+        if let Some(sender) = map.get_mut(&extra) {
+          sender.try_send(payload).unwrap();
+        }
+      },
+      None => {}
     }
   }
 
@@ -49,8 +66,8 @@ impl Observer {
 }
 
 
-pub fn notify<T: AsRef<str>>(extra: T, payload: TdType) {
-  OBSERVER.notify(extra.as_ref().to_string(), payload)
+pub fn notify(payload: TdType) {
+  OBSERVER.notify(payload)
 }
 
 pub fn subscribe<T: AsRef<str>>(extra: T) -> mpsc::Receiver<TdType>{
