@@ -140,11 +140,37 @@ fn deserialize<D>(deserializer: D) -> Result<TdType, D::Error> where D: Deserial
     use serde::de::Error;
     rtd_enum_deserialize!(
       TdType,
-{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  ({{token.name | to_camel }}, {{token.name | to_camel}});
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  ({{token.name }}, {{token.name | to_camel}});
 {% endif %}{% endfor %}
-{% for token in tokens %}{% if token.is_return_type %}  ({{token.name | to_camel }}, {{token.name | to_camel}});
+{% for token in tokens %}{% if token.is_return_type %}  ({{token.name }}, {{token.name | to_camel}});
 {% endif %}{% endfor %}
  )(deserializer)
 
  }
 }
+
+
+
+#[cfg(test)]
+mod tests {
+  use crate::types::{TdType, from_json, UpdateAuthorizationState};
+
+  #[test]
+  fn test_deserialize_enum() {
+    match from_json::<UpdateAuthorizationState>(r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitTdlibParameters"}}"#) {
+      Ok(t) => {},
+      Err(e) => {panic!("{}", e)}
+    };
+
+    match from_json::<TdType>(r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitTdlibParameters"}}"#) {
+      Ok(t) => {
+        match t {
+          TdType::UpdateAuthorizationState(v) => {},
+          _ => panic!("from_json failed: {:?}", t)
+        }
+      },
+      Err(e) => {panic!("{}", e)}
+    };
+  }
+}
+

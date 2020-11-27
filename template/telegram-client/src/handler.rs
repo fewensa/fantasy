@@ -86,61 +86,34 @@ impl<'a> Handler<'a> {
         if let Some(ev) = self.lout.exception() { ev((self.api, &e)); }
       }
     }
-
-
-    macro_rules! event_handler {
-      ($event_name:ident, $td_type:ident) => {
-
-        match rtd_types::from_json::<rtd_types::$td_type>(json) {
-          Ok(t) => {
-
-            // event handler
-            if self.lout.is_support(&td_type) {
-              if let Some(ev) = self.lout.$event_name() {
-                if let Err(_e) = ev((self.api, &t)) {
-                  if let Some(ev) = self.lout.exception() {
-                    ev((self.api, &TGError::new("EVENT_HANDLER_ERROR")));
-                  }
-                }
-                return;
-              }
-              if *self.warn_unregister_listener {
-                warn!("{}", tip::un_register_listener(stringify!($event_name)));
-              }
-            } else {
-              warn!("{}", tip::not_have_listener(td_type));
-            }
-
-            // observer handler
-            // todox: not have rtdtype, need add to rtdlib project, see api.rs#TdType
-            if let Some(ext) = extra {
-              observer::notify(ext, TdType::$td_type(t));
+    match rtd_types::from_json::<rtd_types::TdType>(json) {
+      Ok(t) => {
+        match self.lout.handle_type(self.api, &t) {
+          Ok(true) => return,
+          Ok(false) => {
+            if *self.warn_unregister_listener {
+              warn!("{}", tip::un_register_listener(stringify!(t)));
             }
           }
-          Err(e) => {
-            error!("{}", tip::data_fail_with_json(json));
-            // eprintln!("{:?}", e);
-            error!("{:?}", e);
-            if let Some(ev) = self.lout.exception() { ev((self.api, &TGError::new("DESERIALIZE_JSON_FAIL"))); }
+          Err(_err) => {
+            if let Some(ev) = self.lout.exception() {
+              ev((self.api, &TGError::new("EVENT_HANDLER_ERROR")));
+            }
           }
         }
 
-      };
-    }
-
-    match &td_type[..] {
-{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}      "{{token.name}}" => event_handler!({{token.name  | to_snake}}, {{token.name | to_camel}}),
-{% endif %}{% endfor %}
-{% for token in tokens %}{% if token.is_return_type %}      "{{token.name}}" => event_handler!({{token.name | to_snake}}, {{token.name | to_camel}}),
-{% endif %}{% endfor %}
-{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}      "{{token.name | to_snake | to_camel_lowercase}}" => event_handler!({{name | to_snake}}, {{token.name | to_camel}}),
-{% endfor %}
-
-      _ => {
-        warn!("{}", tip::data_fail_with_json(json))
+        // observer handler
+        // todox: not have rtdtype, need add to rtdlib project, see api.rs#TdType
+        if let Some(ext) = extra {
+          observer::notify(ext, t);
+        }
+      }
+      Err(e) => {
+        error!("{}", tip::data_fail_with_json(json));
+        // eprintln!("{:?}", e);
+        error!("{:?}", e);
+        if let Some(ev) = self.lout.exception() { ev((self.api, &TGError::new("DESERIALIZE_JSON_FAIL"))); }
       }
     }
   }
-
 }
-
