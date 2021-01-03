@@ -233,10 +233,6 @@ maskPointChin = MaskPoint;
 maskPosition point:MaskPoint x_shift:double y_shift:double scale:double = MaskPosition;
 
 
-//@description Represents a closed vector path. The path begins at the end point of the last command @commands List of vector path commands
-closedVectorPath commands:vector<VectorPathCommand> = ClosedVectorPath;
-
-
 //@description Describes one answer option of a poll @text Option text, 1-100 characters @voter_count Number of voters for this option, available only for closed or voted polls @vote_percentage The percentage of votes for this option, 0-100
 //@is_chosen True, if the option was chosen by the user @is_being_chosen True, if the option is being chosen by a pending setPollAnswer request
 pollOption text:string voter_count:int32 vote_percentage:int32 is_chosen:Bool is_being_chosen:Bool = PollOption;
@@ -274,8 +270,8 @@ photo has_stickers:Bool minithumbnail:minithumbnail sizes:vector<photoSize> = Ph
 
 //@description Describes a sticker @set_id The identifier of the sticker set to which the sticker belongs; 0 if none @width Sticker width; as defined by the sender @height Sticker height; as defined by the sender
 //@emoji Emoji corresponding to the sticker @is_animated True, if the sticker is an animated sticker in TGS format @is_mask True, if the sticker is a mask @mask_position Position where the mask should be placed; may be null
-//@outline Sticker's outline represented as a list of closed vector paths; may be empty. The coordinate system origin is in the upper-left corner @thumbnail Sticker thumbnail in WEBP or JPEG format; may be null @sticker File containing the sticker
-sticker set_id:int64 width:int32 height:int32 emoji:string is_animated:Bool is_mask:Bool mask_position:maskPosition outline:vector<closedVectorPath> thumbnail:thumbnail sticker:file = Sticker;
+//@thumbnail Sticker thumbnail in WEBP or JPEG format; may be null @sticker File containing the sticker
+sticker set_id:int64 width:int32 height:int32 emoji:string is_animated:Bool is_mask:Bool mask_position:maskPosition thumbnail:thumbnail sticker:file = Sticker;
 
 //@description Describes a video file @duration Duration of the video, in seconds; as defined by the sender @width Video width; as defined by the sender @height Video height; as defined by the sender
 //@file_name Original name of the file; as defined by the sender @mime_type MIME type of the file; as defined by the sender
@@ -451,7 +447,7 @@ chatPermissions can_send_messages:Bool can_send_media_messages:Bool can_send_pol
 //@is_member True, if the user is a member of the chat
 chatMemberStatusCreator custom_title:string is_anonymous:Bool is_member:Bool = ChatMemberStatus;
 
-//@description The user is a member of a chat and has some additional privileges. In basic groups, administrators can edit and delete messages sent by others, add new members, ban unprivileged members, and manage voice chats. In supergroups and channels, there are more detailed options for administrator privileges
+//@description The user is a member of a chat and has some additional privileges. In basic groups, administrators can edit and delete messages sent by others, add new members, and ban unprivileged members. In supergroups and channels, there are more detailed options for administrator privileges
 //@custom_title A custom title of the administrator; 0-16 characters without emojis; applicable to supergroups only
 //@can_be_edited True, if the current user can edit the administrator privileges for the called user
 //@can_change_info True, if the administrator can change the chat title, photo, and other settings
@@ -462,9 +458,8 @@ chatMemberStatusCreator custom_title:string is_anonymous:Bool is_member:Bool = C
 //@can_restrict_members True, if the administrator can restrict, ban, or unban chat members
 //@can_pin_messages True, if the administrator can pin messages; applicable to groups only
 //@can_promote_members True, if the administrator can add new administrators with a subset of their own privileges or demote administrators that were directly or indirectly promoted by them
-//@can_manage_voice_chats True, if the administrator can manage voice chats; applicable to groups only
 //@is_anonymous True, if the administrator isn't shown in the chat member list and sends messages anonymously; applicable to supergroups only
-chatMemberStatusAdministrator custom_title:string can_be_edited:Bool can_change_info:Bool can_post_messages:Bool can_edit_messages:Bool can_delete_messages:Bool can_invite_users:Bool can_restrict_members:Bool can_pin_messages:Bool can_promote_members:Bool can_manage_voice_chats:Bool is_anonymous:Bool = ChatMemberStatus;
+chatMemberStatusAdministrator custom_title:string can_be_edited:Bool can_change_info:Bool can_post_messages:Bool can_edit_messages:Bool can_delete_messages:Bool can_invite_users:Bool can_restrict_members:Bool can_pin_messages:Bool can_promote_members:Bool is_anonymous:Bool = ChatMemberStatus;
 
 //@description The user is a member of a chat, without any additional privileges or restrictions
 chatMemberStatusMember = ChatMemberStatus;
@@ -719,7 +714,7 @@ messageSendingStateFailed error_code:int32 error_message:string can_retry:Bool r
 //@ttl_expires_in Time left before the message expires, in seconds
 //@via_bot_user_id If non-zero, the user identifier of the bot through which this message was sent
 //@author_signature For channel posts and anonymous group messages, optional author signature
-//@media_album_id Unique identifier of an album this message belongs to. Only audios, documents, photos and videos can be grouped together in albums
+//@media_album_id Unique identifier of an album this message belongs to. Only photos and videos can be grouped together in albums
 //@restriction_reason If non-empty, contains a human-readable description of the reason why access to this message must be restricted
 //@content Content of the message
 //@reply_markup Reply markup for the message; may be null
@@ -866,12 +861,10 @@ chatPosition list:ChatList order:int64 is_pinned:Bool source:ChatSource = ChatPo
 //@unread_mention_count Number of unread messages with a mention/reply in the chat
 //@notification_settings Notification settings for this chat
 //@action_bar Describes actions which should be possible to do through a chat action bar; may be null
-//@voice_chat_group_call_id Group call identifier of an active voice chat; 0 if none or unknown. The voice chat can be received through the method getGroupCall
-//@is_voice_chat_empty True, if an active voice chat is empty
 //@reply_markup_message_id Identifier of the message from which reply markup needs to be used; 0 if there is no default custom reply markup in the chat
 //@draft_message A draft of a message in the chat; may be null
 //@client_data Contains application-specific data associated with the chat. (For example, the chat scroll position or local chat notification settings can be stored here.) Persistent if the message database is used
-chat id:int53 type:ChatType title:string photo:chatPhotoInfo permissions:chatPermissions last_message:message positions:vector<chatPosition> is_marked_as_unread:Bool is_blocked:Bool has_scheduled_messages:Bool can_be_deleted_only_for_self:Bool can_be_deleted_for_all_users:Bool can_be_reported:Bool default_disable_notification:Bool unread_count:int32 last_read_inbox_message_id:int53 last_read_outbox_message_id:int53 unread_mention_count:int32 notification_settings:chatNotificationSettings action_bar:ChatActionBar voice_chat_group_call_id:int32 is_voice_chat_empty:Bool reply_markup_message_id:int53 draft_message:draftMessage client_data:string = Chat;
+chat id:int53 type:ChatType title:string photo:chatPhotoInfo permissions:chatPermissions last_message:message positions:vector<chatPosition> is_marked_as_unread:Bool is_blocked:Bool has_scheduled_messages:Bool can_be_deleted_only_for_self:Bool can_be_deleted_for_all_users:Bool can_be_reported:Bool default_disable_notification:Bool unread_count:int32 last_read_inbox_message_id:int53 last_read_outbox_message_id:int53 unread_mention_count:int32 notification_settings:chatNotificationSettings action_bar:ChatActionBar reply_markup_message_id:int53 draft_message:draftMessage client_data:string = Chat;
 
 //@description Represents a list of chats @total_count Approximate total count of chats found @chat_ids List of chat identifiers
 chats total_count:int32 chat_ids:vector<int53> = Chats;
@@ -953,7 +946,7 @@ keyboardButton text:string type:KeyboardButtonType = KeyboardButton;
 //@description A button that opens a specified URL @url HTTP or tg:// URL to open
 inlineKeyboardButtonTypeUrl url:string = InlineKeyboardButtonType;
 
-//@description A button that opens a specified URL and automatically authorize the current user if allowed to do so @url An HTTP URL to open @id Unique button identifier @forward_text If non-empty, new text of the button in forwarded messages
+//@description A button that opens a specified URL and automatically logs in in current user if they allowed to do that @url An HTTP URL to open @id Unique button identifier @forward_text If non-empty, new text of the button in forwarded messages
 inlineKeyboardButtonTypeLoginUrl url:string id:int32 forward_text:string = InlineKeyboardButtonType;
 
 //@description A button that sends a callback query to a bot @data Data to be sent to the bot via a callback query
@@ -1633,15 +1626,6 @@ messageInvoice title:string description:string photo:photo currency:string total
 //@description A message with information about an ended call @is_video True, if the call was a video call @discard_reason Reason why the call was discarded @duration Call duration, in seconds
 messageCall is_video:Bool discard_reason:CallDiscardReason duration:int32 = MessageContent;
 
-//@description A newly created voice chat @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall
-messageVoiceChatStarted group_call_id:int32 = MessageContent;
-
-//@description A message with information about an ended voice chat @duration Call duration
-messageVoiceChatEnded duration:int32 = MessageContent;
-
-//@description A message with information about an invite to a voice chat @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall @user_ids Invited user identifiers
-messageInviteVoiceChatParticipants group_call_id:int32 user_ids:vector<int32> = MessageContent;
-
 //@description A newly created basic group @title Title of the basic group @member_user_ids User identifiers of members in the basic group
 messageBasicGroupChatCreate title:string member_user_ids:vector<int32> = MessageContent;
 
@@ -1816,8 +1800,8 @@ inputMessageDocument document:InputFile thumbnail:inputThumbnail disable_content
 //@ttl Photo TTL (Time To Live), in seconds (0-60). A non-zero TTL can be specified only in private chats
 inputMessagePhoto photo:InputFile thumbnail:inputThumbnail added_sticker_file_ids:vector<int32> width:int32 height:int32 caption:formattedText ttl:int32 = InputMessageContent;
 
-//@description A sticker message @sticker Sticker to be sent @thumbnail Sticker thumbnail, if available @width Sticker width @height Sticker height @emoji Emoji used to choose the sticker
-inputMessageSticker sticker:InputFile thumbnail:inputThumbnail width:int32 height:int32 emoji:string = InputMessageContent;
+//@description A sticker message @sticker Sticker to be sent @thumbnail Sticker thumbnail, if available @width Sticker width @height Sticker height
+inputMessageSticker sticker:InputFile thumbnail:inputThumbnail width:int32 height:int32 = InputMessageContent;
 
 //@description A video message @video Video to be sent @thumbnail Video thumbnail, if available @added_sticker_file_ids File identifiers of the stickers added to the video, if applicable
 //@duration Duration of the video, in seconds @width Video width @height Video height @supports_streaming True, if the video should be tried to be streamed
@@ -1980,19 +1964,17 @@ emojis emojis:vector<string> = Emojis;
 
 //@description Represents a sticker set
 //@id Identifier of the sticker set @title Title of the sticker set @name Name of the sticker set @thumbnail Sticker set thumbnail in WEBP or TGS format with width and height 100; may be null. The file can be downloaded only before the thumbnail is changed
-//@thumbnail_outline Sticker set thumbnail's outline represented as a list of closed vector paths; may be empty. The coordinate system origin is in the upper-left corner
 //@is_installed True, if the sticker set has been installed by the current user @is_archived True, if the sticker set has been archived. A sticker set can't be installed and archived simultaneously
 //@is_official True, if the sticker set is official @is_animated True, is the stickers in the set are animated @is_masks True, if the stickers in the set are masks @is_viewed True for already viewed trending sticker sets
 //@stickers List of stickers in this set @emojis A list of emoji corresponding to the stickers in the same order. The list is only for informational purposes, because a sticker is always sent with a fixed emoji from the corresponding Sticker object
-stickerSet id:int64 title:string name:string thumbnail:thumbnail thumbnail_outline:vector<closedVectorPath> is_installed:Bool is_archived:Bool is_official:Bool is_animated:Bool is_masks:Bool is_viewed:Bool stickers:vector<sticker> emojis:vector<emojis> = StickerSet;
+stickerSet id:int64 title:string name:string thumbnail:thumbnail is_installed:Bool is_archived:Bool is_official:Bool is_animated:Bool is_masks:Bool is_viewed:Bool stickers:vector<sticker> emojis:vector<emojis> = StickerSet;
 
 //@description Represents short information about a sticker set
 //@id Identifier of the sticker set @title Title of the sticker set @name Name of the sticker set @thumbnail Sticker set thumbnail in WEBP or TGS format with width and height 100; may be null
-//@thumbnail_outline Sticker set thumbnail's outline represented as a list of closed vector paths; may be empty. The coordinate system origin is in the upper-left corner
-//@is_installed True, if the sticker set has been installed by the current user @is_archived True, if the sticker set has been archived. A sticker set can't be installed and archived simultaneously
+//@is_installed True, if the sticker set has been installed by current user @is_archived True, if the sticker set has been archived. A sticker set can't be installed and archived simultaneously
 //@is_official True, if the sticker set is official @is_animated True, is the stickers in the set are animated @is_masks True, if the stickers in the set are masks @is_viewed True for already viewed trending sticker sets
 //@size Total number of stickers in the set @covers Contains up to the first 5 stickers from the set, depending on the context. If the application needs more stickers the full set should be requested
-stickerSetInfo id:int64 title:string name:string thumbnail:thumbnail thumbnail_outline:vector<closedVectorPath> is_installed:Bool is_archived:Bool is_official:Bool is_animated:Bool is_masks:Bool is_viewed:Bool size:int32 covers:vector<sticker> = StickerSetInfo;
+stickerSetInfo id:int64 title:string name:string thumbnail:thumbnail is_installed:Bool is_archived:Bool is_official:Bool is_animated:Bool is_masks:Bool is_viewed:Bool size:int32 covers:vector<sticker> = StickerSetInfo;
 
 //@description Represents a list of sticker sets @total_count Approximate total number of sticker sets found @sets List of sticker sets
 stickerSets total_count:int32 sets:vector<stickerSetInfo> = StickerSets;
@@ -2021,7 +2003,7 @@ callDiscardReasonHungUp = CallDiscardReason;
 //@udp_reflector True, if connection through UDP reflectors is supported
 //@min_layer The minimum supported API layer; use 65
 //@max_layer The maximum supported API layer; use 65
-//@library_versions List of supported tgcalls versions
+//@library_versions List of supported libtgvoip versions
 callProtocol udp_p2p:Bool udp_reflector:Bool min_layer:int32 max_layer:int32 library_versions:vector<string> = CallProtocol;
 
 
@@ -2040,9 +2022,6 @@ callServer id:int64 ip_address:string ipv6_address:string port:int32 type:CallSe
 
 //@description Contains the call identifier @id Call identifier
 callId id:int32 = CallId;
-
-//@description Contains the group call identifier @id Group call identifier
-groupCallId id:int32 = GroupCallId;
 
 
 //@class CallState @description Describes the current call state
@@ -2064,50 +2043,6 @@ callStateDiscarded reason:CallDiscardReason need_rating:Bool need_debug_informat
 
 //@description The call has ended with an error @error Error. An error with the code 4005000 will be returned if an outgoing call is missed because of an expired timeout
 callStateError error:error = CallState;
-
-
-//@description Describes a recently speaking user in a group call @user_id User identifier @is_speaking True, is the user has spoken recently
-groupCallRecentSpeaker user_id:int32 is_speaking:Bool = GroupCallRecentSpeaker;
-
-//@description Describes a group call
-//@id Group call identifier
-//@is_active True, if the call is active
-//@is_joined True, if the call is joined
-//@need_rejoin True, if user was kicked from the call because of network loss and the call needs to be rejoined
-//@can_unmute_self True, if the current user can unmute themself
-//@can_be_managed True, if the current user can manage the group call
-//@participant_count Number of participants in the group call
-//@loaded_all_participants True, if all group call participants are loaded
-//@recent_speakers Recently speaking users in the group call
-//@mute_new_participants True, if only group call administrators can unmute new participants
-//@allowed_change_mute_new_participants True, if group call administrators can enable or disable mute_new_participants setting
-//@duration Call duration; for ended calls only
-groupCall id:int32 is_active:Bool is_joined:Bool need_rejoin:Bool can_unmute_self:Bool can_be_managed:Bool participant_count:int32 loaded_all_participants:Bool recent_speakers:vector<groupCallRecentSpeaker> mute_new_participants:Bool allowed_change_mute_new_participants:Bool duration:int32 = GroupCall;
-
-//@description Describes a payload fingerprint for interaction with tgcalls @hash Value of the field hash @setup Value of the field setup @fingerprint Value of the field fingerprint
-groupCallPayloadFingerprint hash:string setup:string fingerprint:string = GroupCallPayloadFingerprint;
-
-//@description Describes a payload for interaction with tgcalls @ufrag Value of the field ufrag @pwd Value of the field pwd @fingerprints The list of fingerprints
-groupCallPayload ufrag:string pwd:string fingerprints:vector<groupCallPayloadFingerprint> = GroupCallPayload;
-
-//@description Describes a join response candidate for interaction with tgcalls @port Value of the field port @protocol Value of the field protocol @network Value of the field network
-//@generation Value of the field generation @id Value of the field id @component Value of the field component @foundation Value of the field foundation @priority Value of the field priority
-//@ip Value of the field ip @type Value of the field type @tcp_type Value of the field tcp_type @rel_addr Value of the field rel_addr @rel_port Value of the field rel_port
-groupCallJoinResponseCandidate port:string protocol:string network:string generation:string id:string component:string foundation:string priority:string ip:string type:string tcp_type:string rel_addr:string rel_port:string = GroupCallJoinResponseCandidate;
-
-//@description Describes a join response for interaction with tgcalls @payload Join response payload to pass to tgcalls @candidates Join response candidates to pass to tgcalls
-groupCallJoinResponse payload:groupCallPayload candidates:vector<groupCallJoinResponseCandidate> = GroupCallJoinResponse;
-
-//@description Represents a group call participant
-//@user_id Identifier of the user
-//@source User's synchronization source
-//@is_speaking True, if the participant is speaking as set by setGroupCallParticipantIsSpeaking
-//@can_be_muted True, if the current user can mute the participant
-//@can_be_unmuted True, if the current user can allow the participant to unmute themself or unmute the participant (only for self)
-//@is_muted True, if the participant is muted
-//@can_unmute_self True, if the participant can unmute themself
-//@order User's order in the group call participant list. The bigger is order, the higher is user in the list. If order is 0, the user must be removed from the participant list
-groupCallParticipant user_id:int32 source:int32 is_speaking:Bool can_be_muted:Bool can_be_unmuted:Bool is_muted:Bool can_unmute_self:Bool order:int64 = GroupCallParticipant;
 
 
 //@class CallProblem @description Describes the exact type of a problem with a call
@@ -2393,18 +2328,6 @@ chatEventLocationChanged old_location:chatLocation new_location:chatLocation = C
 //@description The is_all_history_available setting of a supergroup was toggled @is_all_history_available New value of is_all_history_available
 chatEventIsAllHistoryAvailableToggled is_all_history_available:Bool = ChatEventAction;
 
-//@description A voice chat was created @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall
-chatEventVoiceChatCreated group_call_id:int32 = ChatEventAction;
-
-//@description A voice chat was discarded @group_call_id Identifier of the voice chat. The voice chat can be received through the method getGroupCall
-chatEventVoiceChatDiscarded group_call_id:int32 = ChatEventAction;
-
-//@description A voice chat participant was muted or unmuted @user_id Identifier of the affected user @is_muted New value of is_muted
-chatEventVoiceChatParticipantIsMutedToggled user_id:int32 is_muted:Bool = ChatEventAction;
-
-//@description The mute_new_participants setting of a voice chat was toggled @mute_new_participants New value of the mute_new_participants setting
-chatEventVoiceChatMuteNewParticipantsToggled mute_new_participants:Bool = ChatEventAction;
-
 //@description Represents a chat event @id Chat event identifier @date Point in time (Unix timestamp) when the event happened @user_id Identifier of the user who performed the action that triggered the event @action Action performed by the user
 chatEvent id:int64 date:int32 user_id:int32 action:ChatEventAction = ChatEvent;
 
@@ -2422,8 +2345,7 @@ chatEvents events:vector<chatEvent> = ChatEvents;
 //@member_restrictions True, if member restricted/unrestricted/banned/unbanned events should be returned
 //@info_changes True, if changes in chat information should be returned
 //@setting_changes True, if changes in chat settings should be returned
-//@voice_chat_changes True, if voice chat actions should be returned
-chatEventLogFilters message_edits:Bool message_deletions:Bool message_pins:Bool member_joins:Bool member_leaves:Bool member_invites:Bool member_promotions:Bool member_restrictions:Bool info_changes:Bool setting_changes:Bool voice_chat_changes:Bool = ChatEventLogFilters;
+chatEventLogFilters message_edits:Bool message_deletions:Bool message_pins:Bool member_joins:Bool member_leaves:Bool member_invites:Bool member_promotions:Bool member_restrictions:Bool info_changes:Bool setting_changes:Bool = ChatEventLogFilters;
 
 
 //@class LanguagePackStringValue @description Represents the value of a string in a language pack
@@ -3224,19 +3146,6 @@ chatStatisticsChannel period:dateRange member_count:statisticalValue mean_view_c
 messageStatistics message_interaction_graph:StatisticalGraph = MessageStatistics;
 
 
-//@description A point on a Cartesian plane @x The point's first coordinate @y The point's second coordinate
-point x:double y:double = Point;
-
-
-//@class VectorPathCommand @description Represents a vector path command
-
-//@description A straight line to a given point @end_point The end point of the straight line
-vectorPathCommandLine end_point:point = VectorPathCommand;
-
-//@description A cubic Bézier curve to a given point @start_control_point The start control point of the curve @end_control_point The end control point of the curve @end_point The end point of the curve
-vectorPathCommandCubicBezierCurve start_control_point:point end_control_point:point end_point:point = VectorPathCommand;
-
-
 //@class Update @description Contains notifications about data changes
 
 //@description The user authorization state has changed @authorization_state New authorization state
@@ -3304,9 +3213,6 @@ updateChatIsBlocked chat_id:int53 is_blocked:Bool = Update;
 
 //@description A chat's has_scheduled_messages field has changed @chat_id Chat identifier @has_scheduled_messages New value of has_scheduled_messages
 updateChatHasScheduledMessages chat_id:int53 has_scheduled_messages:Bool = Update;
-
-//@description A chat voice chat state has changed @chat_id Chat identifier @voice_chat_group_call_id New value of voice_chat_group_call_id @is_voice_chat_empty New value of is_voice_chat_empty
-updateChatVoiceChat chat_id:int53 voice_chat_group_call_id:int32 is_voice_chat_empty:Bool = Update;
 
 //@description The value of the default disable_notification parameter, used when a message is sent to the chat, was changed @chat_id Chat identifier @default_disable_notification The new default_disable_notification value
 updateChatDefaultDisableNotification chat_id:int53 default_disable_notification:Bool = Update;
@@ -3416,13 +3322,6 @@ updateFileGenerationStop generation_id:int64 = Update;
 //@description New call was created or information about a call was updated @call New data about a call
 updateCall call:call = Update;
 
-//@description Information about a group call was updated @group_call New data about a group call
-updateGroupCall group_call:groupCall = Update;
-
-//@description Information about a group call participant was changed. The updates are sent only after the group call is received through getGroupCall and only if the call is joined or being joined
-//@group_call_id Identifier of group call @participant New data about a participant
-updateGroupCallParticipant group_call_id:int32 participant:groupCallParticipant = Update;
-
 //@description New call signaling data arrived @call_id The call identifier @data The data
 updateNewCallSignalingData call_id:int32 data:bytes = Update;
 
@@ -3486,8 +3385,8 @@ updateAnimationSearchParameters provider:string emojis:vector<string> = Update;
 updateSuggestedActions added_actions:vector<SuggestedAction> removed_actions:vector<SuggestedAction> = Update;
 
 //@description A new incoming inline query; for bots only @id Unique query identifier @sender_user_id Identifier of the user who sent the query @user_location User location; may be null
-//@chat_type Contains information about the type of the chat, from which the query originated; may be null if unknown @query Text of the query @offset Offset of the first entry to return
-updateNewInlineQuery id:int64 sender_user_id:int32 user_location:location chat_type:ChatType query:string offset:string = Update;
+//@query Text of the query @offset Offset of the first entry to return
+updateNewInlineQuery id:int64 sender_user_id:int32 user_location:location query:string offset:string = Update;
 
 //@description The user has chosen a result of an inline query; for bots only @sender_user_id Identifier of the user who sent the query @user_location User location; may be null
 //@query Text of the query @result_id Identifier of the chosen result @inline_message_id Identifier of the sent inline message, if known
@@ -3891,12 +3790,12 @@ getMessageLinkInfo url:string = MessageLinkInfo;
 //@reply_markup Markup for replying to the message; for bots only @input_message_content The content of the message to be sent
 sendMessage chat_id:int53 message_thread_id:int53 reply_to_message_id:int53 options:messageSendOptions reply_markup:ReplyMarkup input_message_content:InputMessageContent = Message;
 
-//@description Sends 2-10 messages grouped together into an album. Currently only audio, document, photo and video messages can be grouped into an album. Documents and audio files can be only grouped in an album with messages of the same type. Returns sent messages
+//@description Sends messages grouped together into an album. Currently only audio, document, photo and video messages can be grouped into an album. Documents and audio files can be only grouped in an album with messages of the same type. Returns sent messages
 //@chat_id Target chat
 //@message_thread_id If not 0, a message thread identifier in which the messages will be sent
 //@reply_to_message_id Identifier of a message to reply to or 0
 //@options Options to be used to send the messages
-//@input_message_contents Contents of messages to be sent. At most 10 messages can be added to an album
+//@input_message_contents Contents of messages to be sent
 sendMessageAlbum chat_id:int53 message_thread_id:int53 reply_to_message_id:int53 options:messageSendOptions input_message_contents:vector<InputMessageContent> = Messages;
 
 //@description Invites a bot to a chat (if it is not yet a member) and sends it the /start command. Bots can't be invited to a private chat other than the chat with the bot. Bots can't be invited to channels (although they can be added as admins) and secret chats. Returns the sent message
@@ -3913,9 +3812,7 @@ sendBotStartMessage bot_user_id:int32 chat_id:int53 parameter:string = Message;
 sendInlineQueryResultMessage chat_id:int53 message_thread_id:int53 reply_to_message_id:int53 options:messageSendOptions query_id:int64 result_id:string hide_via_bot:Bool = Message;
 
 //@description Forwards previously sent messages. Returns the forwarded messages in the same order as the message identifiers passed in message_ids. If a message can't be forwarded, null will be returned instead of the message
-//@chat_id Identifier of the chat to which to forward messages
-//@from_chat_id Identifier of the chat from which to forward messages
-//@message_ids Identifiers of the messages to forward. Message identifiers must be in a strictly increasing order. At most 100 messages can be forwarded simultaneously
+//@chat_id Identifier of the chat to which to forward messages @from_chat_id Identifier of the chat from which to forward messages @message_ids Identifiers of the messages to forward. Message identifiers must be in a strictly increasing order
 //@options Options to be used to send the messages
 //@send_copy True, if content of the messages needs to be copied without links to the original messages. Always true if the messages are forwarded to a secret chat
 //@remove_caption True, if media caption of message copies needs to be removed. Ignored if send_copy is false
@@ -4235,18 +4132,18 @@ unpinChatMessage chat_id:int53 message_id:int53 = Ok;
 unpinAllChatMessages chat_id:int53 = Ok;
 
 
-//@description Adds the current user as a new member to a chat. Private and secret chats can't be joined using this method @chat_id Chat identifier
+//@description Adds current user as a new member to a chat. Private and secret chats can't be joined using this method @chat_id Chat identifier
 joinChat chat_id:int53 = Ok;
 
-//@description Removes the current user from chat members. Private and secret chats can't be left using this method @chat_id Chat identifier
+//@description Removes current user from chat members. Private and secret chats can't be left using this method @chat_id Chat identifier
 leaveChat chat_id:int53 = Ok;
 
 //@description Adds a new member to a chat. Members can't be added to private or secret chats. Members will not be added until the chat state has been synchronized with the server
 //@chat_id Chat identifier @user_id Identifier of the user @forward_limit The number of earlier messages from the chat to be forwarded to the new member; up to 100. Ignored for supergroups and channels
 addChatMember chat_id:int53 user_id:int32 forward_limit:int32 = Ok;
 
-//@description Adds multiple new members to a chat. Currently this method is only available for supergroups and channels. This method can't be used to join a chat. Members can't be added to a channel if it has more than 200 members. Members will not be added until the chat state has been synchronized with the server
-//@chat_id Chat identifier @user_ids Identifiers of the users to be added to the chat. The maximum number of added users is 20 for supergroups and 100 for channels
+//@description Adds multiple new members to a chat. Currently this option is only available for supergroups and channels. This option can't be used to join a chat. Members can't be added to a channel if it has more than 200 members. Members will not be added until the chat state has been synchronized with the server
+//@chat_id Chat identifier @user_ids Identifiers of the users to be added to the chat
 addChatMembers chat_id:int53 user_ids:vector<int32> = Ok;
 
 //@description Changes the status of a chat member, needs appropriate privileges. This function is currently not suitable for adding new members to the chat and transferring chat ownership; instead, use addChatMember or transferChatOwnership. The chat member status will not be changed until it has been synchronized with the server
@@ -4372,43 +4269,6 @@ sendCallRating call_id:int32 rating:int32 comment:string problems:vector<CallPro
 sendCallDebugInformation call_id:int32 debug_information:string = Ok;
 
 
-//@description Creates a voice chat (a group call bound to a chat). Available only for basic groups and supergroups; requires can_manage_voice_chats rights @chat_id Chat identifier
-createVoiceChat chat_id:int53 = GroupCallId;
-
-//@description Returns information about a group call @group_call_id Group call identifier
-getGroupCall group_call_id:int32 = GroupCall;
-
-//@description Joins a group call @group_call_id Group call identifier @payload Group join payload, received from tgcalls. Use null to cancel previous joinGroupCall request @source Caller synchronization source identifier; received from tgcalls @is_muted True, if the user's microphone is muted
-joinGroupCall group_call_id:int32 payload:groupCallPayload source:int32 is_muted:Bool = GroupCallJoinResponse;
-
-//@description Toggles whether new participants of a group call can be unmuted only by administrators of the group call. Requires can_manage_voice_chats rights in the corresponding chat and allowed_change_mute_mew_participants group call flag
-//@group_call_id Group call identifier @mute_new_participants New value of the mute_new_participants setting
-toggleGroupCallMuteNewParticipants group_call_id:int32 mute_new_participants:Bool = Ok;
-
-//@description Invites users to a group call. Sends a service message of type messageInviteToGroupCall for voice chats
-//@group_call_id Group call identifier @user_ids User identifiers. At most 10 users can be invited simultaneously
-inviteGroupCallParticipants group_call_id:int32 user_ids:vector<int32> = Ok;
-
-//@description Informs TDLib that a group call participant speaking state has changed @group_call_id Group call identifier
-//@source Group call participant's synchronization source identifier, or 0 for the current user @is_speaking True, if the user is speaking
-setGroupCallParticipantIsSpeaking group_call_id:int32 source:int32 is_speaking:Bool = Ok;
-
-//@description Toggles whether a group call participant is muted, unmuted, or allowed to unmute themself
-//@group_call_id Group call identifier @user_id User identifier @is_muted Pass true if the user must be muted and false otherwise
-toggleGroupCallParticipantIsMuted group_call_id:int32 user_id:int32 is_muted:Bool = Ok;
-
-//@description Loads more group call participants. The loaded participants will be received through updates. Use the field groupCall.loaded_all_participants to check whether all participants has already been loaded
-//@group_call_id Group call identifier. The group call must be previously received through getGroupCall and must be joined or being joined
-//@limit Maximum number of participants to load
-loadGroupCallParticipants group_call_id:int32 limit:int32 = Ok;
-
-//@description Leaves a group call @group_call_id Group call identifier
-leaveGroupCall group_call_id:int32 = Ok;
-
-//@description Discards a group call. Requires can_manage_voice_chats rights in the corresponding chat @group_call_id Group call identifier
-discardGroupCall group_call_id:int32 = Ok;
-
-
 //@description Changes the block state of a message sender. Currently, only users and supergroup chats can be blocked @sender Message Sender @is_blocked New value of is_blocked
 toggleMessageSenderIsBlocked sender:MessageSender is_blocked:Bool = Ok;
 
@@ -4442,7 +4302,7 @@ removeContacts user_ids:vector<int32> = Ok;
 //@description Returns the total number of imported contacts
 getImportedContactCount = Count;
 
-//@description Changes imported contacts using the list of contacts saved on the device. Imports newly added contacts and, if at least the file database is enabled, deletes recently deleted contacts.
+//@description Changes imported contacts using the list of current user contacts saved on the device. Imports newly added contacts and, if at least the file database is enabled, deletes recently deleted contacts.
 //-Query result depends on the result of the previous query, so only one query is possible at the same time @contacts The new list of contacts, contact's vCard are ignored and are not imported
 changeImportedContacts contacts:vector<contact> = ImportedContacts;
 
@@ -4948,7 +4808,7 @@ setAlarm seconds:double = Ok;
 //@description Returns information about existing countries. Can be called before authorization
 getCountries = Countries;
 
-//@description Uses the current IP address to find the current country. Returns two-letter ISO 3166-1 alpha-2 country code. Can be called before authorization
+//@description Uses current user IP address to find their country. Returns two-letter ISO 3166-1 alpha-2 country code. Can be called before authorization
 getCountryCode = Text;
 
 //@description Returns information about a phone number by its prefix. Can be called before authorization @phone_number_prefix The phone number prefix
