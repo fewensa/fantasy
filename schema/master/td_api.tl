@@ -237,7 +237,7 @@ maskPosition point:MaskPoint x_shift:double y_shift:double scale:double = MaskPo
 closedVectorPath commands:vector<VectorPathCommand> = ClosedVectorPath;
 
 
-//@description Describes one answer option of a poll @text Option text, 1-100 characters @voter_count Number of voters for this option, available only for closed or voted polls @vote_percentage The percentage of votes for this option, 0-100
+//@description Describes one answer option of a poll @text Option text; 1-100 characters @voter_count Number of voters for this option, available only for closed or voted polls @vote_percentage The percentage of votes for this option; 0-100
 //@is_chosen True, if the option was chosen by the user @is_being_chosen True, if the option is being chosen by a pending setPollAnswer request
 pollOption text:string voter_count:int32 vote_percentage:int32 is_chosen:Bool is_being_chosen:Bool = PollOption;
 
@@ -249,7 +249,7 @@ pollTypeRegular allow_multiple_answers:Bool = PollType;
 
 //@description A poll in quiz mode, which has exactly one correct answer option and can be answered only once
 //@correct_option_id 0-based identifier of the correct answer option; -1 for a yet unanswered poll
-//@explanation Text that is shown when the user chooses an incorrect answer or taps on the lamp icon, 0-200 characters with at most 2 line feeds; empty for a yet unanswered poll
+//@explanation Text that is shown when the user chooses an incorrect answer or taps on the lamp icon; 0-200 characters with at most 2 line feeds; empty for a yet unanswered poll
 pollTypeQuiz correct_option_id:int32 explanation:formattedText = PollType;
 
 
@@ -308,7 +308,7 @@ venue location:location title:string address:string provider:string id:string ty
 //@param_description Game description @photo Game photo @animation Game animation; may be null
 game id:int64 short_name:string title:string text:formattedText description:string photo:photo animation:animation = Game;
 
-//@description Describes a poll @id Unique poll identifier @question Poll question, 1-300 characters @options List of poll answer options
+//@description Describes a poll @id Unique poll identifier @question Poll question; 1-300 characters @options List of poll answer options
 //@total_voter_count Total number of voters, participating in the poll @recent_voter_user_ids User identifiers of recent voters, if the poll is non-anonymous
 //@is_anonymous True, if the poll is anonymous @type Type of the poll
 //@open_period Amount of time the poll will be active after creation, in seconds @close_date Point in time (Unix timestamp) when the poll will be automatically closed @is_closed True, if the poll is closed
@@ -403,10 +403,11 @@ inputChatPhotoAnimation animation:InputFile main_frame_timestamp:double = InputC
 //@is_support True, if the user is Telegram support account
 //@restriction_reason If non-empty, it contains a human-readable description of the reason why access to this user must be restricted
 //@is_scam True, if many users reported this user as a scam
+//@is_fake True, if many users reported this user as a fake account
 //@have_access If false, the user is inaccessible, and the only information known about the user is inside this class. It can't be passed to any method except GetUser
 //@type Type of the user
 //@language_code IETF language tag of the user's language; only available to bots
-user id:int32 first_name:string last_name:string username:string phone_number:string status:UserStatus profile_photo:profilePhoto is_contact:Bool is_mutual_contact:Bool is_verified:Bool is_support:Bool restriction_reason:string is_scam:Bool have_access:Bool type:UserType language_code:string = User;
+user id:int32 first_name:string last_name:string username:string phone_number:string status:UserStatus profile_photo:profilePhoto is_contact:Bool is_mutual_contact:Bool is_verified:Bool is_support:Bool restriction_reason:string is_scam:Bool is_fake:Bool have_access:Bool type:UserType language_code:string = User;
 
 //@description Contains full information about a user
 //@photo User profile photo; may be null
@@ -479,7 +480,7 @@ chatMemberStatusRestricted is_member:Bool restricted_until_date:int32 permission
 chatMemberStatusLeft = ChatMemberStatus;
 
 //@description The user was banned (and hence is not a member of the chat). Implies the user can't return to the chat or view messages
-//@banned_until_date Point in time (Unix timestamp) when the user will be unbanned; 0 if never. If the user is banned for more than 366 days or for less than 30 seconds from the current time, the user is considered to be banned forever
+//@banned_until_date Point in time (Unix timestamp) when the user will be unbanned; 0 if never. If the user is banned for more than 366 days or for less than 30 seconds from the current time, the user is considered to be banned forever. Always 0 in basic groups
 chatMemberStatusBanned banned_until_date:int32 = ChatMemberStatus;
 
 
@@ -545,6 +546,37 @@ supergroupMembersFilterMention query:string message_thread_id:int53 = Supergroup
 supergroupMembersFilterBots = SupergroupMembersFilter;
 
 
+//@description Contains a chat invite link @invite_link Chat invite link @administrator_user_id User identifier of an administrator created the link
+//@date Point in time (Unix timestamp) when the link was created
+//@edit_date Point in time (Unix timestamp) when the link was last edited; 0 if never or unknown
+//@expire_date Point in time (Unix timestamp) when the link will expire; 0 if never
+//@member_limit Maximum number of members, which can join the chat using the link simultaneously; 0 if not limited
+//@member_count Number of chat members, which joined the chat using the link
+//@is_permanent True, if the link is permanent. Permanent invite link can't have expire date or usage limit. There is exactly one permanent invite link for each administrator with can_invite_users right at a given time
+//@is_expired True, if the link is already expired @is_revoked True, if the link was revoked
+chatInviteLink invite_link:string administrator_user_id:int32 date:int32 edit_date:int32 expire_date:int32 member_limit:int32 member_count:int32 is_permanent:Bool is_expired:Bool is_revoked:Bool = ChatInviteLink;
+
+//@description Contains a list of chat invite links @total_count Approximate total count of chat invite links found @invite_links List of invite links
+chatInviteLinks total_count:int32 invite_links:vector<chatInviteLink> = ChatInviteLinks;
+
+//@description Describes a chat member joined a chat by an invite link @user_id User identifier @joined_chat_date Point in time (Unix timestamp) when the user joined the chat
+chatInviteLinkMember user_id:int32 joined_chat_date:int32 = ChatInviteLinkMember;
+
+//@description Contains a list of chat members joined a chat by an invite link @total_count Approximate total count of chat members found @members List of chat members, joined a chat by an invite link
+chatInviteLinkMembers total_count:int32 members:vector<chatInviteLinkMember> = ChatInviteLinkMembers;
+
+//@description Contains information about a chat invite link
+//@chat_id Chat identifier of the invite link; 0 if the user has no access to the chat before joining
+//@accessible_for If non-zero, the amount of time for which read access to the chat will remain available, in seconds
+//@type Contains information about the type of the chat
+//@title Title of the chat
+//@photo Chat photo; may be null
+//@member_count Number of members in the chat
+//@member_user_ids User identifiers of some chat members that may be known to the current user
+//@is_public True, if the chat is a public supergroup or channel, i.e. it has a username or it is a location-based supergroup
+chatInviteLinkInfo chat_id:int53 accessible_for:int32 type:ChatType title:string photo:chatPhotoInfo member_count:int32 member_user_ids:vector<int32> is_public:Bool = ChatInviteLinkInfo;
+
+
 //@description Represents a basic group of 0-200 users (must be upgraded to a supergroup to accommodate more than 200 users)
 //@id Group identifier
 //@member_count Number of members in the group
@@ -555,11 +587,11 @@ basicGroup id:int32 member_count:int32 status:ChatMemberStatus is_active:Bool up
 
 //@description Contains full information about a basic group
 //@photo Chat photo; may be null
-//@param_description Group description
+//@param_description Group description. Updated only after the basic group is opened
 //@creator_user_id User identifier of the creator of the group; 0 if unknown
 //@members Group members
-//@invite_link Invite link for this group; available only after it has been generated at least once and only for the group creator
-basicGroupFullInfo photo:chatPhoto description:string creator_user_id:int32 members:vector<chatMember> invite_link:string = BasicGroupFullInfo;
+//@invite_link Permanent invite link for this group; may be null. For chat administrators with can_invite_users right only. Updated only after the basic group is opened
+basicGroupFullInfo photo:chatPhoto description:string creator_user_id:int32 members:vector<chatMember> invite_link:chatInviteLink = BasicGroupFullInfo;
 
 
 //@description Represents a supergroup or channel with zero or more members (subscribers in the case of channels). From the point of view of the system, a channel is a special kind of a supergroup: only administrators can post and see the list of members, and posts from all administrators use the name and photo of the channel instead of individual names and profile photos. Unlike supergroups, channels can have an unlimited number of subscribers
@@ -575,8 +607,9 @@ basicGroupFullInfo photo:chatPhoto description:string creator_user_id:int32 memb
 //@is_channel True, if the supergroup is a channel
 //@is_verified True, if the supergroup or channel is verified
 //@restriction_reason If non-empty, contains a human-readable description of the reason why access to this supergroup or channel must be restricted
-//@is_scam True, if many users reported this supergroup as a scam
-supergroup id:int32 username:string date:int32 status:ChatMemberStatus member_count:int32 has_linked_chat:Bool has_location:Bool sign_messages:Bool is_slow_mode_enabled:Bool is_channel:Bool is_verified:Bool restriction_reason:string is_scam:Bool = Supergroup;
+//@is_scam True, if many users reported this supergroup or channel as a scam
+//@is_fake True, if many users reported this supergroup or channel as a fake account
+supergroup id:int32 username:string date:int32 status:ChatMemberStatus member_count:int32 has_linked_chat:Bool has_location:Bool sign_messages:Bool is_slow_mode_enabled:Bool is_channel:Bool is_verified:Bool restriction_reason:string is_scam:Bool is_fake:Bool = Supergroup;
 
 //@description Contains full information about a supergroup or channel
 //@photo Chat photo; may be null
@@ -596,10 +629,10 @@ supergroup id:int32 username:string date:int32 status:ChatMemberStatus member_co
 //@is_all_history_available True, if new chat members will have access to old messages. In public or discussion groups and both public and private channels, old messages are always available, so this option affects only private supergroups without a linked chat. The value of this field is only available for chat administrators
 //@sticker_set_id Identifier of the supergroup sticker set; 0 if none
 //@location Location to which the supergroup is connected; may be null
-//@invite_link Invite link for this chat
+//@invite_link Permanent invite link for this chat; may be null. For chat administrators with can_invite_users right only
 //@upgraded_from_basic_group_id Identifier of the basic group from which supergroup was upgraded; 0 if none
 //@upgraded_from_max_message_id Identifier of the last message in the basic group from which supergroup was upgraded; 0 if none
-supergroupFullInfo photo:chatPhoto description:string member_count:int32 administrator_count:int32 restricted_count:int32 banned_count:int32 linked_chat_id:int53 slow_mode_delay:int32 slow_mode_delay_expires_in:double can_get_members:Bool can_set_username:Bool can_set_sticker_set:Bool can_set_location:Bool can_get_statistics:Bool is_all_history_available:Bool sticker_set_id:int64 location:chatLocation invite_link:string upgraded_from_basic_group_id:int32 upgraded_from_max_message_id:int53 = SupergroupFullInfo;
+supergroupFullInfo photo:chatPhoto description:string member_count:int32 administrator_count:int32 restricted_count:int32 banned_count:int32 linked_chat_id:int53 slow_mode_delay:int32 slow_mode_delay_expires_in:double can_get_members:Bool can_set_username:Bool can_set_sticker_set:Bool can_set_location:Bool can_get_statistics:Bool is_all_history_available:Bool sticker_set_id:int64 location:chatLocation invite_link:chatInviteLink upgraded_from_basic_group_id:int32 upgraded_from_max_message_id:int53 = SupergroupFullInfo;
 
 
 //@class SecretChatState @description Describes the current secret chat state
@@ -657,6 +690,9 @@ messageForwardOriginHiddenUser sender_name:string = MessageForwardOrigin;
 //@message_id Message identifier of the original message
 //@author_signature Original post author signature
 messageForwardOriginChannel chat_id:int53 message_id:int53 author_signature:string = MessageForwardOrigin;
+
+//@description The message was imported from an exported message history @sender_name Name of the sender
+messageForwardOriginMessageImport sender_name:string = MessageForwardOrigin;
 
 
 //@description Contains information about a forwarded message
@@ -884,21 +920,6 @@ chatNearby chat_id:int53 distance:int32 = ChatNearby;
 chatsNearby users_nearby:vector<chatNearby> supergroups_nearby:vector<chatNearby> = ChatsNearby;
 
 
-//@description Contains a chat invite link @invite_link Chat invite link
-chatInviteLink invite_link:string = ChatInviteLink;
-
-//@description Contains information about a chat invite link
-//@chat_id Chat identifier of the invite link; 0 if the user has no access to the chat before joining
-//@accessible_for If non-zero, the amount of time for which read access to the chat will remain available, in seconds
-//@type Contains information about the type of the chat
-//@title Title of the chat
-//@photo Chat photo; may be null
-//@member_count Number of members in the chat
-//@member_user_ids User identifiers of some chat members that may be known to the current user
-//@is_public True, if the chat is a public supergroup or channel, i.e. it has a username or it is a location-based supergroup
-chatInviteLinkInfo chat_id:int53 accessible_for:int32 type:ChatType title:string photo:chatPhotoInfo member_count:int32 member_user_ids:vector<int32> is_public:Bool = ChatInviteLinkInfo;
-
-
 //@class PublicChatType @description Describes a type of public chats
 
 //@description The chat is public, because it has username
@@ -916,6 +937,9 @@ chatActionBarReportSpam can_unarchive:Bool = ChatActionBar;
 
 //@description The chat is a location-based supergroup, which can be reported as having unrelated location using the method reportChat with the reason chatReportReasonUnrelatedLocation
 chatActionBarReportUnrelatedLocation = ChatActionBar;
+
+//@description The chat is a recently created group chat, to which new members can be invited
+chatActionBarInviteMembers = ChatActionBar;
 
 //@description The chat is a private or secret chat, which can be reported using the method reportChat, or the other user can be blocked using the method blockUser, or the other user can be added to the contact list using the method addContact
 //@can_unarchive If true, the chat was automatically archived and can be moved back to the main chat list using addChatToList simultaneously with setting chat notification settings to default using setChatNotificationSettings
@@ -1290,11 +1314,11 @@ inputCredentialsSaved saved_credentials_id:string = InputCredentials;
 //@description Applies if a user enters new credentials on a payment provider website @data Contains JSON-encoded data with a credential identifier from the payment provider @allow_save True, if the credential identifier can be saved on the server side
 inputCredentialsNew data:string allow_save:Bool = InputCredentials;
 
-//@description Applies if a user enters new credentials using Android Pay @data JSON-encoded data with the credential identifier
-inputCredentialsAndroidPay data:string = InputCredentials;
-
 //@description Applies if a user enters new credentials using Apple Pay @data JSON-encoded data with the credential identifier
 inputCredentialsApplePay data:string = InputCredentials;
+
+//@description Applies if a user enters new credentials using Google Pay @data JSON-encoded data with the credential identifier
+inputCredentialsGooglePay data:string = InputCredentials;
 
 //@description Stripe payment provider @publishable_key Stripe API publishable key @need_country True, if the user country must be provided @need_postal_code True, if the user ZIP/postal code must be provided @need_cardholder_name True, if the cardholder name must be provided
 paymentsProviderStripe publishable_key:string need_country:Bool need_postal_code:Bool need_cardholder_name:Bool = PaymentsProviderStripe;
@@ -1360,7 +1384,7 @@ passportElementTypePhoneNumber = PassportElementType;
 passportElementTypeEmailAddress = PassportElementType;
 
 
-//@description Represents a date according to the Gregorian calendar @day Day of the month, 1-31 @month Month, 1-12 @year Year, 1-9999
+//@description Represents a date according to the Gregorian calendar @day Day of the month; 1-31 @month Month; 1-12 @year Year; 1-9999
 date day:int32 month:int32 year:int32 = Date;
 
 //@description Contains the user's personal details
@@ -1851,7 +1875,7 @@ inputMessageGame bot_user_id:int32 game_short_name:string = InputMessageContent;
 //@payload The invoice payload @provider_token Payment provider token @provider_data JSON-encoded data about the invoice, which will be shared with the payment provider @start_parameter Unique invoice bot start_parameter for the generation of this invoice
 inputMessageInvoice invoice:invoice title:string description:string photo_url:string photo_size:int32 photo_width:int32 photo_height:int32 payload:bytes provider_token:string provider_data:string start_parameter:string = InputMessageContent;
 
-//@description A message with a poll. Polls can't be sent to secret chats. Polls can be sent only to a private chat with a bot @question Poll question, 1-255 characters (up to 300 characters for bots) @options List of poll answer options, 2-10 strings 1-100 characters each
+//@description A message with a poll. Polls can't be sent to secret chats. Polls can be sent only to a private chat with a bot @question Poll question; 1-255 characters (up to 300 characters for bots) @options List of poll answer options, 2-10 strings 1-100 characters each
 //@is_anonymous True, if the poll voters are anonymous. Non-anonymous polls can't be sent or forwarded to channels @type Type of the poll
 //@open_period Amount of time the poll will be active after creation, in seconds; for bots only
 //@close_date Point in time (Unix timestamp) when the poll will be automatically closed; for bots only
@@ -2102,12 +2126,16 @@ groupCallJoinResponse payload:groupCallPayload candidates:vector<groupCallJoinRe
 //@user_id Identifier of the user
 //@source User's synchronization source
 //@is_speaking True, if the participant is speaking as set by setGroupCallParticipantIsSpeaking
-//@can_be_muted True, if the current user can mute the participant
-//@can_be_unmuted True, if the current user can allow the participant to unmute themself or unmute the participant (only for self)
-//@is_muted True, if the participant is muted
-//@can_unmute_self True, if the participant can unmute themself
+//@can_be_muted_for_all_users True, if the current user can mute the participant for all other group call participants
+//@can_be_unmuted_for_all_users True, if the current user can allow the participant to unmute themself or unmute the participant (if the participant is the current user)
+//@can_be_muted_for_current_user True, if the current user can mute the participant only for self
+//@can_be_unmuted_for_current_user True, if the current user can unmute the participant for self
+//@is_muted_for_all_users True, if the participant is muted for all users
+//@is_muted_for_current_user True, if the participant is muted for the current user
+//@can_unmute_self True, if the participant is muted for all users, but can unmute themself
+//@volume_level Participant's volume level; 1-20000 in hundreds of percents
 //@order User's order in the group call participant list. The bigger is order, the higher is user in the list. If order is 0, the user must be removed from the participant list
-groupCallParticipant user_id:int32 source:int32 is_speaking:Bool can_be_muted:Bool can_be_unmuted:Bool is_muted:Bool can_unmute_self:Bool order:int64 = GroupCallParticipant;
+groupCallParticipant user_id:int32 source:int32 is_speaking:Bool can_be_muted_for_all_users:Bool can_be_unmuted_for_all_users:Bool can_be_muted_for_current_user:Bool can_be_unmuted_for_current_user:Bool is_muted_for_all_users:Bool is_muted_for_current_user:Bool can_unmute_self:Bool volume_level:int32 order:int64 = GroupCallParticipant;
 
 
 //@class CallProblem @description Describes the exact type of a problem with a call
@@ -2520,7 +2548,7 @@ backgroundTypeWallpaper is_blurred:Bool is_moving:Bool = BackgroundType;
 
 //@description A PNG or TGV (gzipped subset of SVG with MIME type "application/x-tgwallpattern") pattern to be combined with the background fill chosen by the user
 //@fill Description of the background fill
-//@intensity Intensity of the pattern when it is shown above the filled background, 0-100
+//@intensity Intensity of the pattern when it is shown above the filled background; 0-100
 //@is_moving True, if the background needs to be slightly moved when device is tilted
 backgroundTypePattern fill:BackgroundFill intensity:int32 is_moving:Bool = BackgroundType;
 
@@ -2586,6 +2614,18 @@ checkChatUsernameResultPublicChatsTooMuch = CheckChatUsernameResult;
 
 //@description The user can't be a member of a public supergroup
 checkChatUsernameResultPublicGroupsUnavailable = CheckChatUsernameResult;
+
+
+//@class MessageFileType @description Contains information about a file with messages exported from another app
+
+//@description The messages was exported from a private chat @name Name of the other party; may be empty if unrecognized
+messageFileTypePrivate name:string = MessageFileType;
+
+//@description The messages was exported from a group chat @title Title of the group chat; may be empty if unrecognized
+messageFileTypeGroup title:string = MessageFileType;
+
+//@description The messages was exported from a chat of unknown type
+messageFileTypeUnknown = MessageFileType;
 
 
 //@class PushMessageContent @description Contains content of a push message notification
@@ -2867,6 +2907,9 @@ chatReportReasonCopyright = ChatReportReason;
 //@description The location-based chat is unrelated to its stated location
 chatReportReasonUnrelatedLocation = ChatReportReason;
 
+//@description The chat represents a fake account
+chatReportReasonFake = ChatReportReason;
+
 //@description A custom reason provided by the user @text Report text
 chatReportReasonCustom text:string = ChatReportReason;
 
@@ -3076,6 +3119,9 @@ suggestedActionEnableArchiveAndMuteNewChats = SuggestedAction;
 
 //@description Suggests the user to check authorization phone number and change the phone number if it is inaccessible
 suggestedActionCheckPhoneNumber = SuggestedAction;
+
+//@description Suggests the user to see a hint about meaning of one and two ticks on sent message
+suggestedActionSeeTicksHint = SuggestedAction;
 
 
 //@description Contains a counter @count Count
@@ -3798,6 +3844,9 @@ getMessageThreadHistory chat_id:int53 message_id:int53 from_message_id:int53 off
 //@chat_id Chat identifier @remove_from_chat_list Pass true if the chat should be removed from the chat list @revoke Pass true to try to delete chat history for all users
 deleteChatHistory chat_id:int53 remove_from_chat_list:Bool revoke:Bool = Ok;
 
+//@description Deletes a chat along with all messages in the corresponding chat for all chat members; requires owner privileges. For group chats this will release the username and remove all members. Chats with more than 1000 members can't be deleted using this method @chat_id Chat identifier
+deleteChat chat_id:int53 = Ok;
+
 //@description Searches for messages with given words in the chat. Returns the results in reverse chronological order, i.e. in order of decreasing message_id. Cannot be used in secret chats with a non-empty query
 //-(searchSecretMessages should be used instead), or without an enabled message database. For optimal performance the number of returned messages is chosen by the library
 //@chat_id Identifier of the chat in which to search messages
@@ -3835,6 +3884,9 @@ searchSecretMessages chat_id:int53 query:string offset:string limit:int32 filter
 //@from_message_id Identifier of the message from which to search; use 0 to get results from the last message
 //@limit The maximum number of messages to be returned; up to 100. Fewer messages may be returned than specified by the limit, even if the end of the message history has not been reached @only_missed If true, returns only messages with missed calls
 searchCallMessages from_message_id:int53 limit:int32 only_missed:Bool = Messages;
+
+//@description Deletes all call messages @revoke Pass true to delete the messages for all users
+deleteAllCallMessages revoke:Bool = Ok;
 
 //@description Returns information about the recent locations of chat members that were sent to the chat. Returns up to 1 location message per user @chat_id Chat identifier @limit The maximum number of messages to be returned
 searchChatRecentLocationMessages chat_id:int53 limit:int32 = Messages;
@@ -4141,8 +4193,13 @@ createSecretChat secret_chat_id:int32 = Chat;
 //@description Creates a new basic group and sends a corresponding messageBasicGroupChatCreate. Returns the newly created chat @user_ids Identifiers of users to be added to the basic group @title Title of the new basic group; 1-128 characters
 createNewBasicGroupChat user_ids:vector<int32> title:string = Chat;
 
-//@description Creates a new supergroup or channel and sends a corresponding messageSupergroupChatCreate. Returns the newly created chat @title Title of the new chat; 1-128 characters @is_channel True, if a channel chat should be created @param_description Chat description; 0-255 characters @location Chat location if a location-based supergroup is being created
-createNewSupergroupChat title:string is_channel:Bool description:string location:chatLocation = Chat;
+//@description Creates a new supergroup or channel and sends a corresponding messageSupergroupChatCreate. Returns the newly created chat
+//@title Title of the new chat; 1-128 characters
+//@is_channel True, if a channel chat needs to be created
+//@param_description Chat description; 0-255 characters
+//@location Chat location if a location-based supergroup is being created
+//@for_import True, if the supergroup is created for importing messages using importMessage
+createNewSupergroupChat title:string is_channel:Bool description:string location:chatLocation for_import:Bool = Chat;
 
 //@description Creates a new secret chat. Returns the newly created chat @user_id Identifier of the target user
 createNewSecretChat user_id:int32 = Chat;
@@ -4180,11 +4237,11 @@ getRecommendedChatFilters = RecommendedChatFilters;
 getChatFilterDefaultIconName filter:chatFilter = Text;
 
 
-//@description Changes the chat title. Supported only for basic groups, supergroups and channels. Requires can_change_info rights
+//@description Changes the chat title. Supported only for basic groups, supergroups and channels. Requires can_change_info administrator right
 //@chat_id Chat identifier @title New title of the chat; 1-128 characters
 setChatTitle chat_id:int53 title:string = Ok;
 
-//@description Changes the photo of a chat. Supported only for basic groups, supergroups and channels. Requires can_change_info rights
+//@description Changes the photo of a chat. Supported only for basic groups, supergroups and channels. Requires can_change_info administrator right
 //@chat_id Chat identifier @photo New chat photo. Pass null to delete the chat photo
 setChatPhoto chat_id:int53 photo:InputChatPhoto = Ok;
 
@@ -4208,10 +4265,10 @@ toggleChatDefaultDisableNotification chat_id:int53 default_disable_notification:
 //@description Changes application-specific data associated with a chat @chat_id Chat identifier @client_data New value of client_data
 setChatClientData chat_id:int53 client_data:string = Ok;
 
-//@description Changes information about a chat. Available for basic groups, supergroups, and channels. Requires can_change_info rights @chat_id Identifier of the chat @param_description New chat description; 0-255 characters
+//@description Changes information about a chat. Available for basic groups, supergroups, and channels. Requires can_change_info administrator right @chat_id Identifier of the chat @param_description New chat description; 0-255 characters
 setChatDescription chat_id:int53 description:string = Ok;
 
-//@description Changes the discussion group of a channel chat; requires can_change_info rights in the channel if it is specified @chat_id Identifier of the channel chat. Pass 0 to remove a link from the supergroup passed in the second argument to a linked channel chat (requires can_pin_messages rights in the supergroup) @discussion_chat_id Identifier of a new channel's discussion group. Use 0 to remove the discussion group.
+//@description Changes the discussion group of a channel chat; requires can_change_info administrator right in the channel if it is specified @chat_id Identifier of the channel chat. Pass 0 to remove a link from the supergroup passed in the second argument to a linked channel chat (requires can_pin_messages rights in the supergroup) @discussion_chat_id Identifier of a new channel's discussion group. Use 0 to remove the discussion group.
 //-Use the method getSuitableDiscussionChats to find all suitable groups. Basic group chats must be first upgraded to supergroup chats. If new chat members don't have access to old messages in the supergroup, then toggleSupergroupIsAllHistoryAvailable must be used first to change that
 setChatDiscussionGroup chat_id:int53 discussion_chat_id:int53 = Ok;
 
@@ -4241,17 +4298,24 @@ joinChat chat_id:int53 = Ok;
 //@description Removes the current user from chat members. Private and secret chats can't be left using this method @chat_id Chat identifier
 leaveChat chat_id:int53 = Ok;
 
-//@description Adds a new member to a chat. Members can't be added to private or secret chats. Members will not be added until the chat state has been synchronized with the server
+//@description Adds a new member to a chat. Members can't be added to private or secret chats
 //@chat_id Chat identifier @user_id Identifier of the user @forward_limit The number of earlier messages from the chat to be forwarded to the new member; up to 100. Ignored for supergroups and channels
 addChatMember chat_id:int53 user_id:int32 forward_limit:int32 = Ok;
 
-//@description Adds multiple new members to a chat. Currently this method is only available for supergroups and channels. This method can't be used to join a chat. Members can't be added to a channel if it has more than 200 members. Members will not be added until the chat state has been synchronized with the server
+//@description Adds multiple new members to a chat. Currently this method is only available for supergroups and channels. This method can't be used to join a chat. Members can't be added to a channel if it has more than 200 members
 //@chat_id Chat identifier @user_ids Identifiers of the users to be added to the chat. The maximum number of added users is 20 for supergroups and 100 for channels
 addChatMembers chat_id:int53 user_ids:vector<int32> = Ok;
 
-//@description Changes the status of a chat member, needs appropriate privileges. This function is currently not suitable for adding new members to the chat and transferring chat ownership; instead, use addChatMember or transferChatOwnership. The chat member status will not be changed until it has been synchronized with the server
+//@description Changes the status of a chat member, needs appropriate privileges. This function is currently not suitable for adding new members to the chat and transferring chat ownership; instead, use addChatMember or transferChatOwnership
 //@chat_id Chat identifier @user_id User identifier @status The new status of the member in the chat
 setChatMemberStatus chat_id:int53 user_id:int32 status:ChatMemberStatus = Ok;
+
+//@description Bans a member in a chat. Members can't be banned in private or secret chats. In supergroups and channels, the user will not be able to return to the group on their own using invite links, etc., unless unbanned first
+//@chat_id Chat identifier
+//@user_id Identifier of the user
+//@banned_until_date Point in time (Unix timestamp) when the user will be unbanned; 0 if never. If the user is banned for more than 366 days or for less than 30 seconds from the current time, the user is considered to be banned forever. Ignored in basic groups
+//@revoke_messages Pass true to delete all messages in the chat for the user. Always true for supergroups and channels
+banChatMember chat_id:int53 user_id:int32 banned_until_date:int32 revoke_messages:Bool = Ok;
 
 //@description Checks whether the current session can be used to transfer a chat ownership to another user
 canTransferOwnership = CanTransferOwnershipResult;
@@ -4342,14 +4406,24 @@ readFilePart file_id:int32 offset:int32 count:int32 = FilePart;
 deleteFile file_id:int32 = Ok;
 
 
-//@description Generates a new invite link for a chat; the previously generated link is revoked. Available for basic groups, supergroups, and channels. Requires administrator privileges and can_invite_users right @chat_id Chat identifier
-generateChatInviteLink chat_id:int53 = ChatInviteLink;
+//@description Returns information about a file with messages exported from another app @message_file_head Beginning of the message file; up to 100 first lines
+getMessageFileType message_file_head:string = MessageFileType;
 
-//@description Checks the validity of an invite link for a chat and returns information about the corresponding chat @invite_link Invite link to be checked; should begin with "https://t.me/joinchat/", "https://telegram.me/joinchat/", or "https://telegram.dog/joinchat/"
+//@description Imports messages exported from another app
+//@chat_id Identifier of a chat to which the messages will be imported. It must be an identifier of a private chat with a mutual contact or an identifier of a supergroup chat with can_change_info administrator right
+//@message_file File with messages to import. Only inputFileLocal and inputFileGenerated are supported. The file must not be previously uploaded
+//@attached_files Files used in the imported messages. Only inputFileLocal and inputFileGenerated are supported. The files must not be previously uploaded
+importMessages chat_id:int53 message_file:InputFile attached_files:vector<InputFile> = Ok;
+
+
+//@description Replaces current permanent invite link for a chat with a new permanent invite link. Available for basic groups, supergroups, and channels. Requires administrator privileges and can_invite_users right @chat_id Chat identifier
+replacePermanentChatInviteLink chat_id:int53 = ChatInviteLink;
+
+//@description Checks the validity of an invite link for a chat and returns information about the corresponding chat @invite_link Invite link to be checked; must begin with "https://t.me/joinchat/", "https://telegram.me/joinchat/", or "https://telegram.dog/joinchat/"
 checkChatInviteLink invite_link:string = ChatInviteLinkInfo;
 
-//@description Uses an invite link to add the current user to the chat if possible. The new member will not be added until the chat state has been synchronized with the server
-//@invite_link Invite link to import; should begin with "https://t.me/joinchat/", "https://telegram.me/joinchat/", or "https://telegram.dog/joinchat/"
+//@description Uses an invite link to add the current user to the chat if possible
+//@invite_link Invite link to import; must begin with "https://t.me/joinchat/", "https://telegram.me/joinchat/", or "https://telegram.dog/joinchat/"
 joinChatByInviteLink invite_link:string = Chat;
 
 
@@ -4381,7 +4455,7 @@ getGroupCall group_call_id:int32 = GroupCall;
 //@description Joins a group call @group_call_id Group call identifier @payload Group join payload, received from tgcalls. Use null to cancel previous joinGroupCall request @source Caller synchronization source identifier; received from tgcalls @is_muted True, if the user's microphone is muted
 joinGroupCall group_call_id:int32 payload:groupCallPayload source:int32 is_muted:Bool = GroupCallJoinResponse;
 
-//@description Toggles whether new participants of a group call can be unmuted only by administrators of the group call. Requires can_manage_voice_chats rights in the corresponding chat and allowed_change_mute_mew_participants group call flag
+//@description Toggles whether new participants of a group call can be unmuted only by administrators of the group call. Requires groupCall.can_be_managed and allowed_change_mute_mew_participants group call flag
 //@group_call_id Group call identifier @mute_new_participants New value of the mute_new_participants setting
 toggleGroupCallMuteNewParticipants group_call_id:int32 mute_new_participants:Bool = Ok;
 
@@ -4397,6 +4471,10 @@ setGroupCallParticipantIsSpeaking group_call_id:int32 source:int32 is_speaking:B
 //@group_call_id Group call identifier @user_id User identifier @is_muted Pass true if the user must be muted and false otherwise
 toggleGroupCallParticipantIsMuted group_call_id:int32 user_id:int32 is_muted:Bool = Ok;
 
+//@description Changes a group call participant's volume level. If the current user can manage the group call, then the participant's volume level will be changed for all users with default volume level
+//@group_call_id Group call identifier @user_id User identifier @volume_level New participant's volume level; 1-20000 in hundreds of percents
+setGroupCallParticipantVolumeLevel group_call_id:int32 user_id:int32 volume_level:int32 = Ok;
+
 //@description Loads more group call participants. The loaded participants will be received through updates. Use the field groupCall.loaded_all_participants to check whether all participants has already been loaded
 //@group_call_id Group call identifier. The group call must be previously received through getGroupCall and must be joined or being joined
 //@limit Maximum number of participants to load
@@ -4405,7 +4483,7 @@ loadGroupCallParticipants group_call_id:int32 limit:int32 = Ok;
 //@description Leaves a group call @group_call_id Group call identifier
 leaveGroupCall group_call_id:int32 = Ok;
 
-//@description Discards a group call. Requires can_manage_voice_chats rights in the corresponding chat @group_call_id Group call identifier
+//@description Discards a group call. Requires groupCall.can_be_managed @group_call_id Group call identifier
 discardGroupCall group_call_id:int32 = Ok;
 
 
@@ -4616,13 +4694,13 @@ disconnectAllWebsites = Ok;
 //@description Changes the username of a supergroup or channel, requires owner privileges in the supergroup or channel @supergroup_id Identifier of the supergroup or channel @username New value of the username. Use an empty string to remove the username
 setSupergroupUsername supergroup_id:int32 username:string = Ok;
 
-//@description Changes the sticker set of a supergroup; requires can_change_info rights @supergroup_id Identifier of the supergroup @sticker_set_id New value of the supergroup sticker set identifier. Use 0 to remove the supergroup sticker set
+//@description Changes the sticker set of a supergroup; requires can_change_info administrator right @supergroup_id Identifier of the supergroup @sticker_set_id New value of the supergroup sticker set identifier. Use 0 to remove the supergroup sticker set
 setSupergroupStickerSet supergroup_id:int32 sticker_set_id:int64 = Ok;
 
-//@description Toggles sender signatures messages sent in a channel; requires can_change_info rights @supergroup_id Identifier of the channel @sign_messages New value of sign_messages
+//@description Toggles sender signatures messages sent in a channel; requires can_change_info administrator right @supergroup_id Identifier of the channel @sign_messages New value of sign_messages
 toggleSupergroupSignMessages supergroup_id:int32 sign_messages:Bool = Ok;
 
-//@description Toggles whether the message history of a supergroup is available to new members; requires can_change_info rights @supergroup_id The identifier of the supergroup @is_all_history_available The new value of is_all_history_available
+//@description Toggles whether the message history of a supergroup is available to new members; requires can_change_info administrator right @supergroup_id The identifier of the supergroup @is_all_history_available The new value of is_all_history_available
 toggleSupergroupIsAllHistoryAvailable supergroup_id:int32 is_all_history_available:Bool = Ok;
 
 //@description Reports some messages from a user in a supergroup as spam; requires administrator rights in the supergroup @supergroup_id Supergroup identifier @user_id User identifier @message_ids Identifiers of messages sent in the supergroup by the user. This list must be non-empty
@@ -4631,9 +4709,6 @@ reportSupergroupSpam supergroup_id:int32 user_id:int32 message_ids:vector<int53>
 //@description Returns information about members or banned users in a supergroup or channel. Can be used only if SupergroupFullInfo.can_get_members == true; additionally, administrator privileges may be required for some filters @supergroup_id Identifier of the supergroup or channel
 //@filter The type of users to return. By default, supergroupMembersFilterRecent @offset Number of users to skip @limit The maximum number of users be returned; up to 200
 getSupergroupMembers supergroup_id:int32 filter:SupergroupMembersFilter offset:int32 limit:int32 = ChatMembers;
-
-//@description Deletes a supergroup or channel along with all messages in the corresponding chat. This will release the supergroup or channel username and remove all members; requires owner privileges in the supergroup or channel. Chats with more than 1000 members can't be deleted using this method @supergroup_id Identifier of the supergroup or channel
-deleteSupergroup supergroup_id:int32 = Ok;
 
 
 //@description Closes a secret chat, effectively transferring its state to secretChatStateClosed @secret_chat_id Secret chat identifier
@@ -4767,7 +4842,7 @@ deleteAccount reason:string = Ok;
 //@description Removes a chat action bar without any other action @chat_id Chat identifier
 removeChatActionBar chat_id:int53 = Ok;
 
-//@description Reports a chat to the Telegram moderators. A chat can be reported only from the chat action bar, or if this is a private chats with a bot, a private chat with a user sharing their location, a supergroup, or a channel, since other chats can't be checked by moderators @chat_id Chat identifier @reason The reason for reporting the chat @message_ids Identifiers of reported messages, if any
+//@description Reports a chat to the Telegram moderators. A chat can be reported only from the chat action bar, or if this is a private chat with a bot, a private chat with a user sharing their location, a supergroup, or a channel, since other chats can't be checked by moderators @chat_id Chat identifier @reason The reason for reporting the chat @message_ids Identifiers of reported messages, if any
 reportChat chat_id:int53 reason:ChatReportReason message_ids:vector<int53> = Ok;
 
 
@@ -5017,7 +5092,7 @@ setLogTagVerbosityLevel tag:string new_verbosity_level:int32 = Ok;
 getLogTagVerbosityLevel tag:string = LogVerbosityLevel;
 
 //@description Adds a message to TDLib internal log. Can be called synchronously
-//@verbosity_level The minimum verbosity level needed for the message to be logged, 0-1023 @text Text of a message to log
+//@verbosity_level The minimum verbosity level needed for the message to be logged; 0-1023 @text Text of a message to log
 addLogMessage verbosity_level:int32 text:string = Ok;
 
 
