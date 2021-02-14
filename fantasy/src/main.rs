@@ -40,7 +40,7 @@ fn main() {
     .path_rtd(project_path.join("../rtdlib"))
     .path_telegram_client(project_path.join("../telegram-client"))
     .path_template(project_path.join("template"))
-    .file_tl(project_path.join("schema/master/td_api.tl"))
+    .file_tl(project_path.join("schema/v1.7.0/td_api.tl"))
     .build();
 
   let mut tera = Tera::new("template/**/*").expect("Can not create Tera template engine.");
