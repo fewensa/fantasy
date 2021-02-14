@@ -29,6 +29,9 @@ So rtdlib use i64, but libtdjson return json is a string.
 is not "id": 3193525115240425385
 if use Option<i64> serde_json deserialize will throw error.
 """
+[filter.ProfilePhoto.has_animation]
+optional = true
+reason = "May be not sent"
 
 [filter.Chat]
 [filter.Chat.order]
@@ -43,6 +46,10 @@ but libtdjson return data is string
 sample
 {"@type":"updateNewChat","chat":{"@type":"chat","id":690763082,"type":{"@type":"chatTypePrivate","user_id":190363082},"title":"Fnunkuy","order":"0","is_pinned":false, ...}
 """
+
+[filter.Chat.positions]
+optional = true
+reason = "May be not sent"
 
 [filter.Message]
 [filter.Message.media_album_id]
@@ -69,6 +76,10 @@ order is std::int64_t
 sample
 {"@type":"updateChatLastMessage","chat_id":690763082,"last_message":{"@type":"message",...},"order":"0"}
 """
+
+[filter.UpdateChatLastMessage.positions]
+optional = true
+reason = "May be not sent"
 
 [filter.Poll]
 [filter.Poll.id]
@@ -283,6 +294,9 @@ optional = false
 reason = "fix the issue: https://github.com/fewensa/telegram-client/issues/17"
 
 
+[filter.ChatPhotoInfo]
+[filter.ChatPhotoInfo.has_animation]
+optional = true
 
 [listener]
 #ok = "Ok"
