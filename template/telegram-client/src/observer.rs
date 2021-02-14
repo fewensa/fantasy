@@ -21,7 +21,7 @@ impl Observer {
   }
 
   fn notify(&self, payload: TdType) {
-    let extra = match payload {
+    let extra = match &payload {
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
       TdType::{{token.name | to_camel}}(value) => value.extra(),
 {% endfor %}

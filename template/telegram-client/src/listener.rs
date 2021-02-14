@@ -103,19 +103,19 @@ impl Lout {
   pub fn handle_type(&self, api: &EventApi, td_type: &TdType) -> TGResult<bool>  {
     match td_type {
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
-      TdType::{{token.name | to_camel}}(value) => match &self.listener.{{name | to_snake}} {
+    TdType::{{token.name | to_camel}}(value) => match &self.listener.{{name | to_snake}} {
       None => Ok(false),
       Some(f) => f((api, value)).map(|_|true),
     },
 {% endfor %}
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
-      TdType::{{token.name | to_camel}}(value) => match &self.listener.{{token.name | to_snake}} {
+    TdType::{{token.name | to_camel}}(value) => match &self.listener.{{token.name | to_snake}} {
       None => Ok(false),
       Some(f) => f((api, value)).map(|_|true),
     },
 {% endif %}{% endfor %}
 {% for token in tokens %}{% if token.is_return_type %}
-      TdType::{{token.name | to_camel}}(value) => match &self.listener.{{token.name | to_snake}} {
+    TdType::{{token.name | to_camel}}(value) => match &self.listener.{{token.name | to_snake}} {
       None => Ok(false),
       Some(f) => f((api, value)).map(|_|true),
     },
