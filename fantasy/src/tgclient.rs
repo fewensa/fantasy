@@ -83,7 +83,34 @@ impl<'a> TGClient<'a> {
     self.gen_api()?;
     self.gen_listener()?;
     self.gen_handler()?;
+    self.gen_observer()?;
 
+    Ok(())
+  }
+
+  fn gen_observer(&self) -> Result<(), failure::Error> {
+    let config = self.cycle.config();
+    let tknwrap = self.cycle.tknwrap();
+
+    let mut context = Context::new();
+    let tokens = tknwrap.tokens();
+    context.insert("tokens", tokens);
+
+    let listener: HashMap<&String, &String> = tknwrap.tdtypefill().listener()
+      .iter()
+      .filter(|(key, value)| {
+        tknwrap.tokens().iter()
+          .filter(|&token| token.blood() == Some("Update".to_string()))
+          .find(|&token| token.name().to_lowercase() == value.to_lowercase())
+          .is_none()
+      })
+      .collect();
+
+    context.insert("listener", &listener);
+
+    self.cycle.renderer().render("telegram-client/src/observer.rs",
+                                 config.path_telegram_client().join("src/observer.rs"),
+                                 &mut context)?;
     Ok(())
   }
 
@@ -169,7 +196,6 @@ impl<'a> TGClient<'a> {
       (path_template.join("src/rtd.rs"), base_dir.join("src/rtd.rs")),
       (path_template.join("src/tip.rs"), base_dir.join("src/tip.rs")),
       (path_template.join("src/errors.rs"), base_dir.join("src/errors.rs")),
-      (path_template.join("src/observer.rs"), base_dir.join("src/observer.rs")),
       (path_template.join("src/api/mod.rs"), base_dir.join("src/api/mod.rs")),
       (path_template.join("src/api/api.rs"), base_dir.join("src/api/api.rs")),
     ];
