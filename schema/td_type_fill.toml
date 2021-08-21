@@ -185,9 +185,22 @@ macros = [
 optional = false
 reason = """
 issue https://github.com/fewensa/telegram-client/issues/25
-the option value integer value is int, but response is string
+the optionValueInteger value is int, but response is string
   2021-08-21
 """
+
+[filter.UpdateSupergroupFullInfo]
+[filter.UpdateSupergroupFullInfo.supergroup_id]
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
+optional = false
+reason = """
+issue https://github.com/fewensa/telegram-client/issues/24
+the supergroup_id value is int, but response is string
+  2021-08-21
+"""
+
 
 
 [filter.PageBlockCover]
