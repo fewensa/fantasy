@@ -25,14 +25,6 @@ impl fmt::Display for RTDError {
 }
 
 impl error::Error for RTDError {
-  fn description(&self) -> &str {
-    match *self {
-      RTDError::Io(ref err) => err.description(),
-      RTDError::SerdeJson(ref err) => err.description(),
-      RTDError::Custom(msg) => msg,
-    }
-  }
-
   fn cause(&self) -> Option<&dyn error::Error> {
     match *self {
       RTDError::Io(ref err) => Some(err),
@@ -53,7 +45,5 @@ impl From<serde_json::Error> for RTDError {
     RTDError::SerdeJson(err)
   }
 }
-
-//impl From<str> for
 
 
