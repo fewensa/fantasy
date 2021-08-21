@@ -5,18 +5,18 @@ use std::{io, fmt, error};
 pub enum RTDError {
   Io(io::Error),
   SerdeJson(serde_json::Error),
-  Custom(&'static str),
+  Custom(String),
 }
 
 pub type RTDResult<T> = Result<T, RTDError>;
 
 impl RTDError {
-  pub fn custom(msg: &'static str) -> Self { RTDError::Custom(msg) }
+  pub fn custom(msg: String) -> Self { RTDError::Custom(msg) }
 }
 
 impl fmt::Display for RTDError {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match *self {
+    match self {
       RTDError::Io(ref err) => write!(f, "IO error: {}", err),
       RTDError::SerdeJson(ref err) => write!(f, "Serde json error: {}", err),
       RTDError::Custom(msg) => write!(f, "{}", msg),
