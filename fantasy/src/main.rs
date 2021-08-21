@@ -21,20 +21,20 @@ use tokenwrap::TokenWrap;
 
 mod cycle;
 mod rtd;
+mod tdfill;
+mod terafill;
 mod tgclient;
 mod tokenwrap;
-mod terafill;
 mod types;
-mod tdfill;
 
 fn main() {
   simple_logger::init().unwrap();
   log::set_max_level(log::LevelFilter::Debug);
 
-
   let project_path = Path::new("./");
 
-  let tdtypefill = tdfill::TDTypeFill::new(project_path.join("schema/td_type_fill.toml")).unwrap();
+  let tdtypefill =
+    tdfill::TDTypeFill::new(project_path.join("schema/td_type_fill.toml")).unwrap();
 
   let config: Config = Config::builder()
     .path_rtd(project_path.join("../rtdlib"))
@@ -51,7 +51,6 @@ fn main() {
   terafill::fill(&mut tera, tknwrap.clone());
 
   let renderer = Renderer::builder().tera(tera).build();
-
 
   let cycle: Cycle = Cycle::builder()
     .config(config)
