@@ -68,13 +68,14 @@ impl<'a> RTD<'a> {
 
   /// generate src rs file.
   fn gensrc<P: AsRef<Path>>(&self, path_template: P) -> Result<(), failure::Error> {
-    let config = self.cycle.config();
-    let path_template = path_template.as_ref();
-
-    let templatesrc: PathBuf = path_template.join("src");
-    let rtdsrc: PathBuf = config.path_rtd().join("src");
-    // copy src path rs file to target dir
-    self.copy_file_to(&templatesrc, &rtdsrc)?;
+    // let config = self.cycle.config();
+    // let path_template = path_template.as_ref();
+    //
+    // let templatesrc: PathBuf = path_template.join("src");
+    // let rtdsrc: PathBuf = config.path_rtd().join("src");
+    // // copy src path rs file to target dir
+    // self.copy_file_to(&templatesrc, &rtdsrc)?;
+    self.copy_rs(path_template)?;
 
     // generate common rs
     self.gen_common()?;
@@ -129,6 +130,28 @@ impl<'a> RTD<'a> {
                                    config.path_rtd().join(&format!("src/types/{}.rs", file_name)[..]),
                                    &mut context)?;
     }
+    Ok(())
+  }
+
+  fn copy_rs<P: AsRef<Path>>(&self, path_template: P) -> Result<(), failure::Error> {
+    let path_template = path_template.as_ref();
+    let base_dir = self.cycle.config().path_rtd();
+    let wait_copies: Vec<(PathBuf, PathBuf)> = vec![
+      (path_template.join("README.md"), base_dir.join("README.md")),
+      (path_template.join("src/lib.rs"), base_dir.join("src/lib.rs")),
+      (path_template.join("src/errors.rs"), base_dir.join("src/errors.rs")),
+    ];
+
+    for (from, to) in wait_copies {
+      debug!("COPY {} -> {}", from.to_str().map_or("", |v| v).blue(), to.to_str().map_or("", |v| v).blue());
+      if let Some(parent) = to.parent() {
+        if !parent.exists() {
+          std::fs::create_dir_all(parent)?;
+        }
+      }
+      std::fs::copy(from, to)?;
+    }
+
     Ok(())
   }
 }
