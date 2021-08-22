@@ -135,8 +135,11 @@ impl<'a> TGClient<'a> {
 
     context.insert("listener", &listener);
 
-    self.cycle.renderer().render("telegram-client/src/listener.rs",
-                                 config.path_telegram_client().join("src/listener.rs"),
+    self.cycle.renderer().render("telegram-client/src/listener/lasync.rs",
+                                 config.path_telegram_client().join("src/listener/lasync.rs"),
+                                 &mut context)?;
+    self.cycle.renderer().render("telegram-client/src/listener/levent.rs",
+                                 config.path_telegram_client().join("src/listener/levent.rs"),
                                  &mut context)?;
     Ok(())
   }
@@ -198,10 +201,17 @@ impl<'a> TGClient<'a> {
       (path_template.join("src/errors.rs"), base_dir.join("src/errors.rs")),
       (path_template.join("src/api/mod.rs"), base_dir.join("src/api/mod.rs")),
       (path_template.join("src/api/api.rs"), base_dir.join("src/api/api.rs")),
+      (path_template.join("src/listener/mod.rs"), base_dir.join("src/listener/mod.rs")),
+      (path_template.join("src/listener/listener.rs"), base_dir.join("src/listener/listener.rs")),
     ];
 
     for (from, to) in wait_copies {
       debug!("COPY {} -> {}", from.to_str().map_or("", |v| v).blue(), to.to_str().map_or("", |v| v).blue());
+      if let Some(parent) = to.parent() {
+        if !parent.exists() {
+          std::fs::create_dir_all(parent)?;
+        }
+      }
       std::fs::copy(from, to)?;
     }
 

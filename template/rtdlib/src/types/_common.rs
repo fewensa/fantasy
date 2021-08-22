@@ -49,7 +49,7 @@ macro_rules! rtd_enum_deserialize {
             )
           }),
         )*
-        _ => return Err(D::Error::custom(format!("missing field {}", stringify!($field))))
+        _ => return Err(D::Error::custom(format!("missing field {}", rtd_trait_type)))
       };
       Ok(obj)
     }
