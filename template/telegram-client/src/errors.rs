@@ -1,7 +1,8 @@
+use std::{error, fmt};
 use std::any::Any;
-
-use std::{fmt, error};
 use std::fmt::Debug;
+
+use rtdlib::errors::RTDError;
 
 pub trait TGDatable: Debug {
   fn as_any(&self) -> &dyn Any;
@@ -64,6 +65,15 @@ impl fmt::Display for TGError {
 impl error::Error for TGError {
   fn cause(&self) -> Option<&dyn error::Error> {
     None
+  }
+}
+
+impl From<RTDError> for TGError {
+  fn from(err: RTDError) -> Self {
+    let mut tgerr = Self::new("RTDLIB_ERROR");
+    tgerr.set_message(err.to_string());
+    tgerr.set_context(Box::new(err));
+    tgerr
   }
 }
 
