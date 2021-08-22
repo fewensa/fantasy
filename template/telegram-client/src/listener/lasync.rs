@@ -8,16 +8,16 @@ use crate::errors::*;
 /// Telegram client event listener
 #[derive(Clone, Default)]
 pub struct RasyncListener {
-  exception: Option<Arc<dyn Send + Sync + Fn((&Api, &TGError)) -> LocalBoxFuture<'static, ()>>>,
-  receive: Option<Arc<dyn Send + Sync + Fn((&Api, &String)) -> LocalBoxFuture<'static, TGResult<()>>>>,
+  exception: Option<Arc<dyn Send + Sync + Fn((Api, TGError)) -> LocalBoxFuture<'static, ()>>>,
+  receive: Option<Arc<dyn Send + Sync + Fn((Api, String)) -> LocalBoxFuture<'static, TGResult<()>>>>,
 
-{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}  {{name | to_snake}}: Option<Arc<dyn Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>>>>,
+{% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}  {{name | to_snake}}: Option<Arc<dyn Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>>>>,
 {% endfor %}
 
-{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name | to_snake}}: Option<Arc<dyn Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>>>>,
+{% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  {{token.name | to_snake}}: Option<Arc<dyn Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>>>>,
 {% endif %}{% endfor %}
 
-{% for token in tokens %}{% if token.is_return_type %}  {{token.name | to_snake}}: Option<Arc<dyn Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>>>>,
+{% for token in tokens %}{% if token.is_return_type %}  {{token.name | to_snake}}: Option<Arc<dyn Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>>>>,
 {% endif %}{% endfor %}
 }
 
@@ -32,20 +32,20 @@ impl RasyncListener {
 
 
   /// when receive data from tdlib
-  pub fn on_receive<F>(&mut self, fnc: F) -> &mut Self where F: Send + Sync + Fn((&Api, &String)) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
+  pub fn on_receive<F>(&mut self, fnc: F) -> &mut Self where F: Send + Sync + Fn((Api, String)) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
     self.receive = Some(Arc::new(fnc));
     self
   }
 
   /// when telegram client throw exception
-  pub fn on_exception<F>(&mut self, fnc: F) -> &mut Self where F: Send + Sync + Fn((&Api, &TGError)) -> LocalBoxFuture<'static, ()> + 'static {
+  pub fn on_exception<F>(&mut self, fnc: F) -> &mut Self where F: Send + Sync + Fn((Api, TGError)) -> LocalBoxFuture<'static, ()> + 'static {
     self.exception = Some(Arc::new(fnc));
     self
   }
 
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
   /// {{token.description}}
-  pub fn on_{{name | to_snake}}<F>(&mut self, fnc: F) -> &mut Self where F: Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
+  pub fn on_{{name | to_snake}}<F>(&mut self, fnc: F) -> &mut Self where F: Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
     self.{{name}} = Some(Arc::new(fnc));
     self
   }
@@ -56,7 +56,7 @@ impl RasyncListener {
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
   /// {{token.description}}
   pub fn on_{{token.name  | to_snake}}<F>(&mut self, fnc: F) -> &mut Self
-    where F: Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
+    where F: Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
     self.{{token.name  | to_snake}} = Some(Arc::new(fnc));
     self
   }
@@ -65,7 +65,7 @@ impl RasyncListener {
 {% for token in tokens %}{% if token.is_return_type %}
   /// {{token.description}}
   pub fn on_{{token.name | to_snake}}<F>(&mut self, fnc: F) -> &mut Self
-    where F: Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
+    where F: Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static {
     self.{{token.name | to_snake}} = Some(Arc::new(fnc));
     self
   }
@@ -74,6 +74,7 @@ impl RasyncListener {
 
 
 /// Get listener
+#[derive(Clone)]
 pub struct RasyncLout {
   listener: RasyncListener,
   supports: Vec<&'static str>
@@ -106,19 +107,19 @@ impl RasyncLout {
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
       TdType::{{token.name | to_camel}}(value) => match &self.listener.{{name | to_snake}} {
         None => Ok(false),
-        Some(f) => f((api, value)).await.map(|_| true),
+        Some(f) => f((api.clone(), value.clone())).await.map(|_| true),
       },
 {% endfor %}
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
       TdType::{{token.name | to_camel}}(value) => match &self.listener.{{token.name | to_snake}} {
         None => Ok(false),
-        Some(f) => f((api, value)).await.map(|_| true),
+        Some(f) => f((api.clone(), value.clone())).await.map(|_| true),
       },
 {% endif %}{% endfor %}
 {% for token in tokens %}{% if token.is_return_type %}
       TdType::{{token.name | to_camel}}(value) => match &self.listener.{{token.name | to_snake}} {
         None => Ok(false),
-        Some(f) => f((api, value)).await.map(|_| true),
+        Some(f) => f((api.clone(), value.clone())).await.map(|_| true),
       },
 {% endif %}{% endfor %}
 
@@ -126,18 +127,18 @@ impl RasyncLout {
   }
 
   /// when telegram client throw exception
-  pub fn exception(&self) -> &Option<Arc<dyn Send + Sync + Fn((&Api, &TGError)) -> LocalBoxFuture<'static, ()> + 'static>> {
+  pub fn exception(&self) -> &Option<Arc<dyn Send + Sync + Fn((Api, TGError)) -> LocalBoxFuture<'static, ()> + 'static>> {
     &self.listener.exception
   }
 
   /// when receive data from tdlib
-  pub fn receive(&self) -> &Option<Arc<dyn Send + Sync + Fn((&Api, &String)) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
+  pub fn receive(&self) -> &Option<Arc<dyn Send + Sync + Fn((Api, String)) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
     &self.listener.receive
   }
 
 {% for name, td_type in listener %}{% set token = find_token(token_name = td_type) %}
   /// {{token.description}}
-  pub fn {{name | to_snake}}(&self) -> &Option<Arc<dyn Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
+  pub fn {{name | to_snake}}(&self) -> &Option<Arc<dyn Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
     &self.listener.{{name | to_snake}}
   }
 {% endfor %}
@@ -145,14 +146,14 @@ impl RasyncLout {
 
 {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}
   /// {{token.description}}
-  pub fn {{token.name  | to_snake}}(&self) -> &Option<Arc<dyn Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
+  pub fn {{token.name  | to_snake}}(&self) -> &Option<Arc<dyn Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
     &self.listener.{{token.name  | to_snake}}
   }
 {% endif %}{% endfor %}
 
 {% for token in tokens %}{% if token.is_return_type %}
   /// {{token.description}}
-  pub fn {{token.name | to_snake}}(&self) -> &Option<Arc<dyn Send + Sync + Fn((&Api, &{{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
+  pub fn {{token.name | to_snake}}(&self) -> &Option<Arc<dyn Send + Sync + Fn((Api, {{token.name | to_camel}})) -> LocalBoxFuture<'static, TGResult<()>> + 'static>> {
     &self.listener.{{token.name | to_snake}}
   }
 {% endif %}{% endfor %}

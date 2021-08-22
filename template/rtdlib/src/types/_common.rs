@@ -165,6 +165,36 @@ fn deserialize<D>(deserializer: D) -> Result<TdType, D::Error> where D: Deserial
  }
 }
 
+impl RObject for TdType {
+  #[doc(hidden)]
+  fn td_name(&self) -> &'static str {
+    match self {
+    {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  Self::{{token.name | to_camel }}(value) => value.td_name(),
+    {% endif %}{% endfor %}
+    {% for token in tokens %}{% if token.is_return_type %}  Self::{{token.name | to_camel }}(value) => value.td_name(),
+    {% endif %}{% endfor %}
+    }
+  }
+  #[doc(hidden)]
+  fn extra(&self) -> Option<String> {
+    match self {
+      {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  Self::{{token.name | to_camel }}(value) => value.extra(),
+      {% endif %}{% endfor %}
+      {% for token in tokens %}{% if token.is_return_type %}  Self::{{token.name | to_camel }}(value) => value.extra(),
+      {% endif %}{% endfor %}
+    }
+  }
+  /// Return td type to json string
+  fn to_json(&self) -> RTDResult<String> {
+    match self {
+      {% for token in tokens %}{% if token.blood and token.blood == 'Update' %}  Self::{{token.name | to_camel }}(value) => value.to_json(),
+      {% endif %}{% endfor %}
+      {% for token in tokens %}{% if token.is_return_type %}  Self::{{token.name | to_camel }}(value) => value.to_json(),
+      {% endif %}{% endfor %}
+    }
+  }
+}
+
 
 
 #[cfg(test)]

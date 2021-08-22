@@ -73,6 +73,7 @@ impl EventListener {
 
 
 /// Get listener
+#[derive(Clone)]
 pub struct EventLout {
   listener: EventListener,
   supports: Vec<&'static str>

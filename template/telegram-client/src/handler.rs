@@ -1,11 +1,12 @@
 use rtdlib::types as rtd_types;
+use rtdlib::types::RObject;
 
 use crate::api::Api;
 use crate::errors::TGError;
-use crate::observer;
-use crate::tip;
 use crate::listener::lasync::RasyncLout;
 use crate::listener::levent::EventLout;
+use crate::observer;
+use crate::tip;
 
 pub struct Handler<'a> {
   api: &'a Api,
@@ -40,9 +41,9 @@ impl<'a> Handler<'a> {
     }
     // async listener
     if let Some(ev) = self.rasync_lout.receive() {
-      if let Err(e) = ev((self.api, json)).await {
-        if let Some(ev) = self.event_lout.exception() {
-          ev((self.api, &e));
+      if let Err(e) = ev((self.api.clone(), json.clone())).await {
+        if let Some(ev) = self.rasync_lout.exception() {
+          ev((self.api.clone(), e)).await;
         }
       }
     }
@@ -58,7 +59,7 @@ impl<'a> Handler<'a> {
           Ok(true) => return,
           Ok(false) => {
             if *self.warn_unregister_listener {
-              warn!("{}", tip::un_register_listener(stringify!(t)));
+              warn!("{}", tip::un_register_listener(t.td_name()));
             }
           }
           Err(_err) => {
@@ -73,12 +74,12 @@ impl<'a> Handler<'a> {
           Ok(true) => return,
           Ok(false) => {
             if *self.warn_unregister_listener {
-              warn!("{}", tip::un_register_listener(stringify!(t)));
+              warn!("{}", tip::un_register_listener(t.td_name()));
             }
           }
           Err(_err) => {
             if let Some(ev) = self.rasync_lout.exception() {
-              ev((self.api, &TGError::new("EVENT_HANDLER_ERROR"))).await;
+              ev((self.api.clone(), TGError::new("EVENT_HANDLER_ERROR"))).await;
             }
           }
         }
@@ -94,7 +95,7 @@ impl<'a> Handler<'a> {
         }
         // async listener
         if let Some(ev) = self.rasync_lout.exception() {
-          ev((self.api, &TGError::new("DESERIALIZE_JSON_FAIL"))).await;
+          ev((self.api.clone(), TGError::new("DESERIALIZE_JSON_FAIL"))).await;
         }
       }
     }
