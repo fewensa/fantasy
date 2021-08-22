@@ -18,7 +18,6 @@ pub struct TGError {
 
 pub type TGResult<T> = Result<T, TGError>;
 
-
 impl TGError {
   pub fn new(key: &'static str) -> Self {
     Self {
@@ -28,13 +27,20 @@ impl TGError {
       context: None
     }
   }
+  pub fn custom(message: impl AsRef<str>) -> Self {
+    let mut error = Self::new("CUSTOM_ERROR");
+    error.set_message(message.as_ref());
+    message
+  }
+}
 
+impl TGError {
   pub fn set_key(&mut self, key: &'static str) -> &mut Self {
     self.key = key;
     self
   }
 
-  pub fn set_message<S: AsRef<str>>(&mut self, message: S) -> &mut Self {
+  pub fn set_message(&mut self, message: impl AsRef<str>) -> &mut Self {
     self.message = Some(message.as_ref().to_string());
     self
   }
