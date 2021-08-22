@@ -30,7 +30,7 @@ impl TGError {
   pub fn custom(message: impl AsRef<str>) -> Self {
     let mut error = Self::new("CUSTOM_ERROR");
     error.set_message(message.as_ref());
-    message
+    error
   }
 }
 
