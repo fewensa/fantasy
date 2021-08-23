@@ -194,6 +194,7 @@ impl<'a> TGClient<'a> {
     let base_dir = self.cycle.config().path_telegram_client();
     let wait_copies: Vec<(PathBuf, PathBuf)> = vec![
       (path_template.join("README.md"), base_dir.join("README.md")),
+      (path_template.join("CHANGELOG.md"), base_dir.join("CHANGELOG.md")),
       (path_template.join("src/lib.rs"), base_dir.join("src/lib.rs")),
       (path_template.join("src/client.rs"), base_dir.join("src/client.rs")),
       (path_template.join("src/rtd.rs"), base_dir.join("src/rtd.rs")),
