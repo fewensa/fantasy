@@ -29,7 +29,7 @@ Version mapping
 
 | rtdlib        | td          |
 |---------------|-------------|
-| 0.*           | [master@fa8feef](https://github.com/tdlib/td/commit/fa8feefed70d64271945e9d5fd010b957d93c8cd) |
+| 0.8.*         | [master@fa8feef](https://github.com/tdlib/td/commit/fa8feefed70d64271945e9d5fd010b957d93c8cd) |
 | 1.8.*         | 1.8.*       |
 
 The version `1.3`, `1.4`, `1.5`, `1.6`, `1.7` is outdated. the reason you can read
