@@ -212,7 +212,18 @@ the id value is int, but response is string
   2021-08-22
 """
 
-
+[filter.Background]
+[filter.Background.id]
+macros = [
+  """#[serde(deserialize_with = "serde_aux::field_attributes::deserialize_number_from_string")]"""
+]
+optional = false
+reason = """
+https://github.com/fewensa/rtdlib/pull/7
+https://github.com/fewensa/telegram-client/issues/31
+the id value is int, but response is string
+  2022-01-29
+"""
 
 [filter.PageBlockCover]
 [filter.PageBlockCover.cover]
@@ -327,7 +338,6 @@ reason = "recursive type"
 sign_type = "Vec<Option<Message>>"
 optional = false
 reason = "fix the issue: https://github.com/fewensa/telegram-client/issues/17"
-
 
 [filter.ChatPhotoInfo]
 [filter.ChatPhotoInfo.has_animation]
