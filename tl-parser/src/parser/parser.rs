@@ -1,15 +1,15 @@
 use std::fs;
 use std::path::Path;
 
-use failure::Error;
+use anyhow::{Error, bail};
+use log::debug;
 
-use crate::errors;
 use crate::parser::group_parser;
 use crate::parser::tl;
 use crate::types::*;
 
 pub struct TLParser<P: AsRef<Path>> {
-  path: P
+  path: P,
 }
 
 impl<P: AsRef<Path>> TLParser<P> {
@@ -20,7 +20,7 @@ impl<P: AsRef<Path>> TLParser<P> {
   pub fn parse(&self) -> Result<Vec<TLTokenGroup>, Error> {
     let path = self.path.as_ref();
     if !path.exists() {
-      return bail!("tl file not found -> {:?}", path);
+      bail!("tl file not found -> {:?}", path);
     }
 
     debug!("Reading {:?}", path);
@@ -30,11 +30,11 @@ impl<P: AsRef<Path>> TLParser<P> {
     debug!("Start parse tl schema group");
 
     let grammars = group_parser::parse(&tlbody)?;
-//    debug!("GROUPS: {:#?}", grammars);
+    //    debug!("GROUPS: {:#?}", grammars);
 
     debug!("Start parse token group");
     let tokens = tl::token_group(&grammars)?;
-//    debug!("TOKENS: {:#?}", tokens);
+    //    debug!("TOKENS: {:#?}", tokens);
     debug!("Parse token group finish");
 
     debug!("Parse tl schema group finish");
@@ -42,7 +42,3 @@ impl<P: AsRef<Path>> TLParser<P> {
     Ok(tokens)
   }
 }
-
-
-
-

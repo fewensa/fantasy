@@ -57,57 +57,26 @@ macro_rules! rtd_enum_deserialize {
 }
 
 
-///// tuple enum is field
-//macro_rules! tuple_enum_is {
-//  ($enum_name:ident, $field:ident) => {
-//    |o: &$enum_name| {
-//      if let $enum_name::$field(_) = o { true } else { false }
-//    }
-//  };
-////  ($e:ident, $t:ident, $namespace:ident) => {
-////    Box::new(|t: &$e| {
-////      match t {
-////        $namespace::$e::$t(_) => true,
-////        _ => false
-////      }
-////    })
-////  };
-//}
-//
-//macro_rules! tuple_enum_on {
-//  ($enum_name:ident, $field:ident, $fnc:expr) => {
-//    |o: &$enum_name| {
-//      if let $enum_name::$field(t) = o { $fnc(t) }
-//    }
-//  };
-//}
-
 pub fn detect_td_type<S: AsRef<str>>(json: S) -> Option<String> {
-  let result: Result<serde_json::Value, serde_json::Error> = serde_json::from_str::<serde_json::Value>(json.as_ref());
-  if let Err(_) = result { return None }
-  let value = result.unwrap();
-  value.as_object().map_or(None, |v| {
-    v.get("@type").map_or(None, |t| t.as_str().map_or(None, |t| {
-      Some(t.to_string())
-    }))
-  })
+  let value: serde_json::Value = serde_json::from_str(json.as_ref()).ok()?;
+  let obj = value.as_object()?;
+  obj.get("@type")?.as_str().map(str::to_string)
 }
 
 pub fn detect_td_type_and_extra<S: AsRef<str>>(json: S) -> (Option<String>, Option<String>) {
-  let result: Result<serde_json::Value, serde_json::Error> = serde_json::from_str::<serde_json::Value>(json.as_ref());
-  if let Err(_) = result { return (None, None) }
-  let value = result.unwrap();
-  let mut type_ = None;
-  let mut extra = None;
-  if let Some(map) = value.as_object() {
-    map.get("@type").map(|v| v.as_str().map(|t| type_.replace(t.to_string())));
-    map.get("@extra").map(|v| v.as_str().map(|t| extra.replace(t.to_string())));
-  }
+  let Ok(value) = serde_json::from_str::<serde_json::Value>(json.as_ref()) else {
+    return (None, None);
+  };
+  let Some(map) = value.as_object() else {
+    return (None, None);
+  };
+  let type_ = map.get("@type").and_then(serde_json::Value::as_str).map(str::to_string);
+  let extra = map.get("@extra").and_then(serde_json::Value::as_str).map(str::to_string);
   (type_, extra)
 }
 
 pub fn from_json<'a, T>(json: &'a str) -> RTDResult<T> where T: serde::de::Deserialize<'a>, {
-  Ok(serde_json::from_str(json.as_ref())?)
+  Ok(serde_json::from_str(json)?)
 }
 
 /// All tdlib type abstract class defined the same behavior
@@ -123,25 +92,25 @@ pub trait RObject: Debug {
 pub trait RFunction: Debug + RObject {}
 
 
-impl<'a, RObj: RObject> RObject for &'a RObj {
+impl<RObj: RObject> RObject for &RObj {
   fn td_name(&self) -> &'static str { (*self).td_name() }
   fn to_json(&self) -> RTDResult<String> { (*self).to_json() }
   fn extra(&self) -> Option<String> { (*self).extra() }
 }
 
-impl<'a, RObj: RObject> RObject for &'a mut RObj {
+impl<RObj: RObject> RObject for &mut RObj {
   fn td_name(&self) -> &'static str { (**self).td_name() }
   fn to_json(&self) -> RTDResult<String> { (**self).to_json() }
   fn extra(&self) -> Option<String> { (**self).extra() }
 }
 
 
-impl<'a, Fnc: RFunction> RFunction for &'a Fnc {}
-impl<'a, Fnc: RFunction> RFunction for &'a mut Fnc {}
+impl<Fnc: RFunction> RFunction for &Fnc {}
+impl<Fnc: RFunction> RFunction for &mut Fnc {}
 
 {% for token in tokens %}{% if token.type_ == 'Trait' %}
-impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &'a {{token.name | upper}} {}
-impl<'a, {{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &'a mut {{token.name | upper}} {}
+impl<{{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &{{token.name | upper}} {}
+impl<{{token.name | upper}}: TD{{token.name | to_camel}}> TD{{token.name | to_camel}} for &mut {{token.name | upper}} {}
 {% endif %}{% endfor %}
 
 #[derive(Debug, Clone)]
@@ -199,24 +168,26 @@ impl RObject for TdType {
 
 #[cfg(test)]
 mod tests {
-  use crate::types::{TdType, from_json, UpdateAuthorizationState};
+  use super::RObject;
+  use crate::types::{from_json, TdType, UpdateAuthorizationState};
+
+  const AUTH_JSON: &str = r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitTdlibParameters"}}"#;
 
   #[test]
   fn test_deserialize_enum() {
-    match from_json::<UpdateAuthorizationState>(r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitTdlibParameters"}}"#) {
-      Ok(t) => {},
-      Err(e) => {panic!("{}", e)}
-    };
+    let value = from_json::<UpdateAuthorizationState>(AUTH_JSON).expect("deserialize update");
+    assert_eq!(value.td_name(), "updateAuthorizationState");
 
-    match from_json::<TdType>(r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitTdlibParameters"}}"#) {
-      Ok(t) => {
-        match t {
-          TdType::UpdateAuthorizationState(v) => {},
-          _ => panic!("from_json failed: {:?}", t)
-        }
-      },
-      Err(e) => {panic!("{}", e)}
-    };
+    // TdType's debug deserialize frame is larger than the default test-thread stack.
+    let handle = std::thread::Builder::new()
+      .stack_size(32 * 1024 * 1024)
+      .spawn(|| match from_json::<TdType>(AUTH_JSON) {
+        Ok(TdType::UpdateAuthorizationState(_)) => {}
+        Ok(other) => panic!("from_json failed: {:?}", other),
+        Err(err) => panic!("{}", err),
+      })
+      .expect("spawn");
+    handle.join().expect("join");
   }
 }
 

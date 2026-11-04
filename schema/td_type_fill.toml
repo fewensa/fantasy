@@ -333,6 +333,89 @@ sign_type = "Box<RichText>"
 optional = false
 reason = "recursive type"
 
+[filter.RichTextBankCardNumber]
+[filter.RichTextBankCardNumber.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextSpoiler]
+[filter.RichTextSpoiler.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextDateTime]
+[filter.RichTextDateTime.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextMention]
+[filter.RichTextMention.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextHashtag]
+[filter.RichTextHashtag.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextCashtag]
+[filter.RichTextCashtag.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextTonAddress]
+[filter.RichTextTonAddress.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextBotCommand]
+[filter.RichTextBotCommand.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextButton]
+[filter.RichTextButton.button]
+sign_type = "Box<InlineButton>"
+optional = false
+reason = "recursive type: RichText -> InlineButton -> RichText"
+
+[filter.RichTextMentionName]
+[filter.RichTextMentionName.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextDiff]
+[filter.RichTextDiff.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextDiff.old_text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.RichTextReferenceLink]
+[filter.RichTextReferenceLink.text]
+sign_type = "Box<RichText>"
+optional = false
+reason = "recursive type"
+
+[filter.TargetChatInternalLink]
+[filter.TargetChatInternalLink.link]
+sign_type = "Box<InternalLinkType>"
+optional = false
+reason = "recursive type: InternalLinkType -> TargetChat -> InternalLinkType"
+
 [filter.Messages]
 [filter.Messages.messages]
 sign_type = "Vec<Option<Message>>"

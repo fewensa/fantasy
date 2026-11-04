@@ -1,25 +1,12 @@
-use std::fs::File;
-
-use failure::Error;
-
-use tl_parser::parser::*;
-use tl_parser::parser::parser::TLParser;
 use std::path::Path;
 
-#[macro_use]
-extern crate log;
+use tl_parser::parser::parser::TLParser;
 
 fn main() {
-  simple_logger::init().unwrap();
-  log::set_max_level(log::LevelFilter::Debug);
-
-  let path = std::env::current_dir().unwrap().join("schema/master/td_api.tl");
+  let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../schema/v1.8.69/td_api.tl");
   let parser = TLParser::new(path);
   match parser.parse() {
-    Ok(tokens) => {
-      debug!("tokens: {:#?}", tokens);
-      debug!("finish");
-    },
-    Err(e) => panic!("{:?}", e)
+    Ok(tokens) => println!("parsed {} tokens", tokens.len()),
+    Err(e) => panic!("{:?}", e),
   }
 }

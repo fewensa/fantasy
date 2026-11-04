@@ -1,40 +1,34 @@
 use std::path::Path;
 
-use failure::Error;
-
 use tl_parser::parser::parser::TLParser;
-use tl_parser::types::TLTokenGroup;
+use tl_parser::types::TLTokenGroupType;
 
-fn tokens() -> Result<Vec<TLTokenGroup>, Error> {
-  let path = Path::new("../").join("schema/master/td_api.tl");
-  TLParser::new(path).parse()
+fn tokens() -> Vec<tl_parser::types::TLTokenGroup> {
+  let path = Path::new("../").join("schema/v1.8.69/td_api.tl");
+  TLParser::new(path).parse().expect("parse td_api.tl")
 }
-
 
 #[test]
 fn test_td() {
-  let tl = self::tokens();
-  assert!(tl.is_ok(), true);
-  let tokens = tl.unwrap();
-  let len = tokens.len();
-  assert!(len > 0, true);
-  tokens.iter().enumerate().for_each(|(ix, token)| {
-    match ix {
-      0 => {
-        assert_eq!(token.name(), "double".to_string());
-        assert_eq!(token.blood(), Some("Double".to_string()));
-      }
-      1 => {
-        assert_eq!(token.name(), "string".to_string());
-        assert_eq!(token.blood(), Some("String".to_string()));
-      }
-      1096 => {
-        assert_eq!(token.name(), "testUseError".to_string());
-        assert_eq!(token.blood(), Some("Error".to_string()));
-      }
-      _ => {}
-    }
-  });
+  let tokens = tokens();
+  assert!(!tokens.is_empty());
+
+  let double = tokens
+    .iter()
+    .find(|token| token.name() == "double")
+    .expect("double");
+  assert_eq!(double.blood(), Some("Double".to_string()));
+
+  let string = tokens
+    .iter()
+    .find(|token| token.name() == "string")
+    .expect("string");
+  assert_eq!(string.blood(), Some("String".to_string()));
+
+  assert!(tokens.iter().any(|token| token.name() == "testCallEmpty"));
+  assert!(tokens.iter().any(|token| token.name() == "tonNft"));
+  assert!(tokens.iter().any(|token| token.name() == "proxyTypeWeb"));
+  assert!(tokens.iter().any(|token| {
+    token.type_() == TLTokenGroupType::Function && token.name() == "setTdlibParameters"
+  }));
 }
-
-

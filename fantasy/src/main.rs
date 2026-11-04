@@ -1,16 +1,6 @@
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-extern crate log;
-#[macro_use]
-extern crate serde_derive;
-#[macro_use]
-extern crate typed_builder;
-
 use std::path::{Path, PathBuf};
 
+use anyhow::Context;
 use tera::Tera;
 
 use cycle::*;
@@ -25,39 +15,101 @@ mod tdfill;
 mod terafill;
 mod tgclient;
 mod tokenwrap;
-mod types;
 
 fn main() {
-  simple_logger::init().unwrap();
-  log::set_max_level(log::LevelFilter::Debug);
+  simple_logger::SimpleLogger::new()
+    .with_level(log::LevelFilter::Info)
+    .init()
+    .expect("logger");
 
-  let project_path = Path::new("./");
+  let workspace = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
+  let rtd_out = std::env::var("RTD_OUT")
+    .map(PathBuf::from)
+    .unwrap_or_else(|_| workspace.join("target/rtd-out"));
+  let tl_file = std::env::var("TL_FILE")
+    .map(PathBuf::from)
+    .unwrap_or_else(|_| workspace.join("schema/v1.8.69/td_api.tl"));
 
-  let tdtypefill =
-    tdfill::TDTypeFill::new(project_path.join("schema/td_type_fill.toml")).unwrap();
+  let tdtypefill = tdfill::TDTypeFill::new(workspace.join("schema/td_type_fill.toml"))
+    .expect("read schema/td_type_fill.toml");
 
-  let config: Config = Config::builder()
-    .path_rtd(project_path.join("../rtdlib"))
-    .path_telegram_client(project_path.join("../telegram-client"))
-    .path_template(project_path.join("template"))
-    .file_tl(project_path.join("schema/master/td_api.tl"))
+  let config = Config::builder()
+    .path_rtd(rtd_out)
+    .path_telegram_client(
+      std::env::var("TG_OUT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| workspace.join("target/telegram-client-out")),
+    )
+    .path_template(workspace.join("template"))
+    .file_tl(tl_file)
     .build();
 
-  let mut tera = Tera::new("template/**/*").expect("Can not create Tera template engine.");
+  let mut tera = Tera::new(&format!("{}/**/*", config.path_template().display()))
+    .expect("Can not create Tera template engine.");
 
-  let tokens = TLParser::new(config.file_tl()).parse().unwrap();
-  let tknwrap = TokenWrap::new(tokens, tdtypefill.clone());
+  let tokens = TLParser::new(config.file_tl())
+    .parse()
+    .expect("parse td_api.tl");
+  let tknwrap = TokenWrap::new(tokens, tdtypefill);
 
-  terafill::fill(&mut tera, tknwrap.clone());
+  terafill::fill(&mut tera, tknwrap.clone()).expect("register template helpers");
 
   let renderer = Renderer::builder().tera(tera).build();
-
-  let cycle: Cycle = Cycle::builder()
+  let cycle = Cycle::builder()
     .config(config)
     .tknwrap(tknwrap)
     .renderer(renderer)
     .build();
 
-  RTD::new(&cycle).generate().unwrap();
-  TGClient::new(&cycle).generate().unwrap();
+  RTD::new(&cycle).generate().expect("generate rtdlib");
+  if std::env::var_os("TG_OUT").is_some() {
+    TGClient::new(&cycle)
+      .generate()
+      .expect("generate telegram-client");
+  }
+
+  rustfmt_tree(&cycle.config().path_rtd().join("src")).expect("rustfmt rtdlib output");
+  if std::env::var_os("TG_OUT").is_some() {
+    rustfmt_tree(&cycle.config().path_telegram_client().join("src"))
+      .expect("rustfmt telegram-client output");
+  }
+}
+
+/// Format generated Rust the same way rtdlib does (`edition = 2021`, two-space indent).
+fn rustfmt_tree(dir: &Path) -> anyhow::Result<()> {
+  let mut files = Vec::new();
+  collect_rs(dir, &mut files)?;
+  files.sort();
+  if files.is_empty() {
+    return Ok(());
+  }
+  for chunk in files.chunks(64) {
+    let status = std::process::Command::new("rustfmt")
+      .arg("--edition")
+      .arg("2021")
+      .arg("--config")
+      .arg("tab_spaces=2")
+      .args(chunk)
+      .status()
+      .context("run rustfmt")?;
+    if !status.success() {
+      anyhow::bail!("rustfmt failed");
+    }
+  }
+  Ok(())
+}
+
+fn collect_rs(dir: &Path, files: &mut Vec<PathBuf>) -> std::io::Result<()> {
+  if !dir.exists() {
+    return Ok(());
+  }
+  for entry in std::fs::read_dir(dir)? {
+    let path = entry?.path();
+    if path.is_dir() {
+      collect_rs(&path, files)?;
+    } else if path.extension().and_then(|ext| ext.to_str()) == Some("rs") {
+      files.push(path);
+    }
+  }
+  Ok(())
 }
