@@ -1,20 +1,20 @@
-use failure::Error;
-use text_reader::TextReader;
+use anyhow::{Error, bail};
 
 use crate::types::*;
 
 /// parse tl schema text to tl grammar group
-pub fn parse<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, Error> {
+pub fn parse<S: AsRef<str>>(schema: S) -> Result<Vec<Box<dyn TLGrammar>>, Error> {
   parse_group_by_line(schema)
 }
 
-
 /// parse group by line of schema text
-fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, Error> {
+fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<dyn TLGrammar>>, Error> {
   let schema = schema.as_ref();
-  if schema.is_empty() { return bail!("tl schema is empty"); }
+  if schema.is_empty() {
+    bail!("tl schema is empty");
+  }
   let schlines: Vec<&str> = schema.split("\n").collect();
-  let mut grammars: Vec<Box<TLGrammar>> = vec![];
+  let mut grammars: Vec<Box<dyn TLGrammar>> = vec![];
   let mut group_lines: Vec<TLGroupLine> = vec![];
 
   let mut ix = 0;
@@ -28,7 +28,12 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
       let linet = schline.replace("-", "");
       match &linet.to_lowercase()[..] {
         "functions" => grammars.push(Box::new(TLParagraph::Functions { start: ix, end: ix })),
-        _ => return bail!("Unsupport paragraph token -> {} line -> [{}] line_text -> {}", linet, ix, schline)
+        _ => bail!(
+          "Unsupport paragraph token -> {} line -> [{}] line_text -> {}",
+          linet,
+          ix,
+          schline
+        ),
       }
       continue;
     }
@@ -36,17 +41,31 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
     let linet: String = schline.chars().skip(2).take(chs.len()).collect();
     // trait
     if schline.starts_with("//@class ") {
-      grammars.push(Box::new(TLGroup::builder()
-        .start(ix)
-        .end(ix)
-        .lines(vec![TLGroupLine::builder().line(ix).token(TLGroupLineToken::Trait).text(linet).build()])
-        .build()));
+      grammars.push(Box::new(
+        TLGroup::builder()
+          .start(ix)
+          .end(ix)
+          .lines(vec![
+            TLGroupLine::builder()
+              .line(ix)
+              .token(TLGroupLineToken::Trait)
+              .text(linet)
+              .build(),
+          ])
+          .build(),
+      ));
       continue;
     }
 
     // description
     if schline.starts_with("//") {
-      group_lines.push(TLGroupLine::builder().line(ix).token(TLGroupLineToken::Description).text(linet).build());
+      group_lines.push(
+        TLGroupLine::builder()
+          .line(ix)
+          .token(TLGroupLineToken::Description)
+          .text(linet)
+          .build(),
+      );
       continue;
     }
 
@@ -56,28 +75,35 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
     } else {
       schline.to_string()
     };
-    group_lines.push(TLGroupLine::builder().line(ix).token(TLGroupLineToken::Struct).text(linet).build());
+    group_lines.push(
+      TLGroupLine::builder()
+        .line(ix)
+        .token(TLGroupLineToken::Struct)
+        .text(linet)
+        .build(),
+    );
 
     // group line end
-    grammars.push(Box::new(TLGroup::builder()
-      .start(group_lines.get(0).map_or(0, |v| v.line))
-      .end(ix)
-      .lines(group_lines.clone())
-      .build()));
+    grammars.push(Box::new(
+      TLGroup::builder()
+        .start(group_lines.first().map_or(0, |v| v.line))
+        .end(ix)
+        .lines(group_lines.clone())
+        .build(),
+    ));
     group_lines.clear();
   }
 
   Ok(grammars)
 }
 
-
 ///// parse tl group use text reader
 ///// text reader parse with all character, poor performance
 //#[doc(hidden)]
-//fn parse_group_use_text_reader<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, Error> {
+//fn parse_group_use_text_reader<S: AsRef<str>>(schema: S) -> Result<Vec<Box<dyn TLGrammar>>, Error> {
 //  let mut reader = TextReader::new(schema.as_ref());
 //
-//  let mut grammars: Vec<Box<TLGrammar>> = vec![];
+//  let mut grammars: Vec<Box<dyn TLGrammar>> = vec![];
 //  let mut group_lines: Vec<TLGroupLine> = vec![];
 //
 //  while reader.has_next() {
@@ -124,7 +150,7 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
 //      }
 //      Some(';') => {
 //        let line = reader.this_line();
-//        if line.is_none() { return bail!("tl schema fail line -> [{}] , line_text -> {:?}", reader.line(), reader.this_line()); }
+//        if line.is_none() { bail!("tl schema fail line -> [{}] , line_text -> {:?}", reader.line(), reader.this_line()); }
 //        let line_text = line.unwrap();
 //        let mut line = line_text.chars();
 //        // if current char is ; and this line first char is not / , group end
@@ -136,7 +162,7 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
 //            .build());
 //          let gpsfirst = group_lines.get(0);
 //          if gpsfirst.is_none() {
-//            return bail!("tl schema fail line -> [{}] line_text -> {}", reader.line(), line_text);
+//            bail!("tl schema fail line -> [{}] line_text -> {}", reader.line(), line_text);
 //          }
 //          let gpsfirst = gpsfirst.unwrap();
 //
@@ -168,7 +194,7 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
 //          let line_number = reader.line() as i32;
 //          match &line.to_lowercase()[..] {
 //            "functions" => grammars.push(Box::new(TLParagraph::Functions { start: line_number, end: line_number })),
-//            _ => return bail!("Unsupport paragraph token -> {} line -> [{}] line_text -> {}", line, reader.line(), line)
+//            _ => bail!("Unsupport paragraph token -> {} line -> [{}] line_text -> {}", line, reader.line(), line)
 //          }
 //
 //          // skip to next line
@@ -189,7 +215,7 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
 //          continue;
 //        }
 //        // faild token
-//        return bail!("tl schema fail line -> [{}] line_text -> {}", reader.line(), line);
+//        bail!("tl schema fail line -> [{}] line_text -> {}", reader.line(), line);
 //      }
 //      Some('\n') => {
 //        // back a char
@@ -217,5 +243,3 @@ fn parse_group_by_line<S: AsRef<str>>(schema: S) -> Result<Vec<Box<TLGrammar>>, 
 //
 //  Ok(grammars)
 //}
-
-

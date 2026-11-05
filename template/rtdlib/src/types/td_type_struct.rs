@@ -9,7 +9,7 @@ pub struct {{struct_name}} {
   #[serde(rename(serialize = "@extra", deserialize = "@extra"))]
   extra: Option<String>,
   {% for field in token.arguments %}/// {{field.description}}
-  {% for macro_ in td_macros(arg=field, token=token) %}{{macro_}} {% endfor %}{% if field.sign_name == 'type' %}#[serde(rename(serialize = "type", deserialize = "type"))] {% endif %}{{field.sign_name | td_safe_field}}: {{td_arg(arg=field, token=token)}},
+  {% for macro_ in td_macros(arg=field, token=token) %}{{macro_}} {% endfor %}{% if field.sign_name == 'type' %}#[serde(rename(serialize = "type", deserialize = "type"))] {% endif %}{% if field.sign_name == 'extra' %}#[serde(rename(serialize = "extra", deserialize = "extra"))] {% endif %}{{field.sign_name | td_safe_field}}: {{td_arg(arg=field, token=token)}},
   {% endfor %}
 }
 
@@ -27,9 +27,12 @@ impl RObject for {{struct_name}} {
 impl {{struct_name}} {
   pub fn from_json<S: AsRef<str>>(json: S) -> RTDResult<Self> { Ok(serde_json::from_str(json.as_ref())?) }
   pub fn builder() -> RTD{{struct_name}}Builder {
-    let mut inner = {{struct_name}}::default();
-    inner.td_name = "{{token.name}}".to_string();
-    inner.extra = Some(Uuid::new_v4().to_string());
+    let inner = {{struct_name}} {
+      td_name: "{{token.name}}".to_string(),
+      extra: Some(Uuid::new_v4().to_string()),
+      {% if token.arguments %}..Default::default()
+      {% endif %}
+    };
     RTD{{struct_name}}Builder { inner }
   }
 {% for field in token.arguments %}{% set field_type = td_arg(arg=field, token=token) %}{% set is_primitive = is_primitive(type_ = field_type) %}

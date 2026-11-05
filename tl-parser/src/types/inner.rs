@@ -1,6 +1,9 @@
+#![allow(dead_code)]
+
 use std::any::Any;
-use std::collections::HashMap;
 use std::fmt::Debug;
+
+use typed_builder::TypedBuilder;
 
 /// tl trait
 #[derive(Debug, Clone, TypedBuilder)]
@@ -18,46 +21,37 @@ pub trait TLGrammar: Debug {
   fn token(&self) -> TLTextToken;
 }
 
-impl TLGrammar {
+impl dyn TLGrammar {
   pub fn is_group(&self) -> bool {
-    match self.as_any().downcast_ref::<TLGroup>() {
-      Some(_) => true,
-      None => false,
-    }
+    self.as_any().downcast_ref::<TLGroup>().is_some()
   }
 
   pub fn is_paragraph(&self) -> bool {
-    match self.as_any().downcast_ref::<TLParagraph>() {
-      Some(_) => true,
-      None => false,
-    }
+    self.as_any().downcast_ref::<TLParagraph>().is_some()
   }
 
   pub fn on_group<F: FnOnce(&TLGroup)>(&self, fnc: F) -> &Self {
-    match self.as_any().downcast_ref::<TLGroup>() {
-      Some(t) => fnc(t),
-      None => {},
-    };
+    if let Some(t) = self.as_any().downcast_ref::<TLGroup>() {
+      fnc(t);
+    }
     self
   }
 
   pub fn on_paragraph<F: FnOnce(&TLParagraph)>(&self, fnc: F) -> &Self {
-    match self.as_any().downcast_ref::<TLParagraph>() {
-      Some(t) => fnc(t),
-      None => {},
-    };
+    if let Some(t) = self.as_any().downcast_ref::<TLParagraph>() {
+      fnc(t);
+    }
     self
   }
 
   pub fn to_group(&self) -> Option<TLGroup> {
-    self.as_any().downcast_ref::<TLGroup>().map(|v| v.clone())
+    self.as_any().downcast_ref::<TLGroup>().cloned()
   }
 
   pub fn to_paragraph(&self) -> Option<TLParagraph> {
-    self.as_any().downcast_ref::<TLParagraph>().map(|v| v.clone())
+    self.as_any().downcast_ref::<TLParagraph>().cloned()
   }
 }
-
 
 #[derive(Debug, Clone)]
 pub enum TLTextToken {
@@ -66,7 +60,7 @@ pub enum TLTextToken {
 }
 
 impl TLGrammar for TLGroup {
-  fn as_any(&self) -> &Any {
+  fn as_any(&self) -> &dyn Any {
     self
   }
 
@@ -84,19 +78,19 @@ impl TLGrammar for TLGroup {
 }
 
 impl TLGrammar for TLParagraph {
-  fn as_any(&self) -> &Any {
+  fn as_any(&self) -> &dyn Any {
     self
   }
 
   fn start(&self) -> i32 {
     match *self {
-      TLParagraph::Functions { start, end } => start
+      TLParagraph::Functions { start, end: _ } => start,
     }
   }
 
   fn end(&self) -> i32 {
     match *self {
-      TLParagraph::Functions { start, end } => end
+      TLParagraph::Functions { start: _, end } => end,
     }
   }
 
@@ -131,9 +125,5 @@ pub struct TLGroup {
 /// tl schema paragraph
 #[derive(Debug, Clone)]
 pub enum TLParagraph {
-  Functions {
-    start: i32,
-    end: i32,
-  }
+  Functions { start: i32, end: i32 },
 }
-

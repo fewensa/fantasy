@@ -4,21 +4,17 @@ use tl_parser::types::*;
 
 use crate::tdfill::TDTypeFill;
 
-lazy_static! {
-  static ref SKIP_TYPES: Vec<&'static str> = {
-    vec![
-      "double",
-      "string",
-      "int32",
-      "int53",
-      "int64",
-      "bytes",
-      "boolFalse",
-      "boolTrue",
-      "vector",
-    ]
-  };
-}
+const SKIP_TYPES: &[&str] = &[
+  "double",
+  "string",
+  "int32",
+  "int53",
+  "int64",
+  "bytes",
+  "boolFalse",
+  "boolTrue",
+  "vector",
+];
 
 #[derive(Debug, Clone)]
 pub struct TokenWrap {
@@ -41,14 +37,16 @@ impl TokenWrap {
 
   /// is skip type
   pub fn is_skip_type(&self, type_name: String) -> bool {
-    SKIP_TYPES.contains(&&type_name[..])
+    SKIP_TYPES.contains(&type_name.as_str())
   }
 
   /// The file where td type is located
   pub fn which_file(&self, type_name: String) -> String {
-    let token = self.tokens.iter()
+    let token = self
+      .tokens
+      .iter()
       .find(|&item| item.name() == type_name)
-      .expect(&format!("Can't found this type -> {}", type_name));
+      .unwrap_or_else(|| panic!("Can't found this type -> {}", type_name));
     if token.type_() == TLTokenGroupType::Trait {
       return token.name().to_snake();
     }
@@ -63,16 +61,22 @@ impl TokenWrap {
           blood.to_snake()
         }
       }
-      None => token.name().to_snake()
+      None => token.name().to_snake(),
     }
   }
 
   pub fn is_optional_arg(&self, token: &TLTokenGroup, arg: &TLTokenArgType) -> bool {
-    self.tdtypefill.td_filter(token.name(), arg.sign_name())
-      .map_or_else(|| arg.description().map_or(false, |v| {
-        let nospace = v.replace(" ", "");
-        if nospace.contains("maybenull") { return true }
-        false
-      }), |v| v.optional())
+    self
+      .tdtypefill
+      .td_filter(token.name(), arg.sign_name())
+      .map_or_else(
+        || {
+          arg.description().is_some_and(|v| {
+            let nospace = v.replace(" ", "");
+            nospace.contains("maybenull")
+          })
+        },
+        |v| v.optional(),
+      )
   }
 }

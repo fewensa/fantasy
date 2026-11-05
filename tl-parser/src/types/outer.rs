@@ -1,11 +1,15 @@
-use std::any::Any;
 use std::collections::HashMap;
 use std::fmt::Debug;
+
+use serde::{Deserialize, Serialize};
+use typed_builder::TypedBuilder;
 
 /// token argument
 #[derive(Debug, Clone, TypedBuilder, Serialize, Deserialize)]
 pub struct TLTokenArgType {
+  #[builder(setter(into))]
   pub(crate) sign_name: String,
+  #[builder(setter(into))]
   pub(crate) sign_type: String,
   #[builder(default)]
   pub(crate) description: Option<String>,
@@ -15,6 +19,7 @@ pub struct TLTokenArgType {
 /// token component type
 #[derive(Debug, Clone, TypedBuilder, Serialize, Deserialize)]
 pub struct TLTokenComponentType {
+  #[builder(setter(into))]
   sign_type: String,
   components: Vec<TLTokenComponentType>,
 }
@@ -45,32 +50,53 @@ pub struct TLTokenGroup {
   pub(crate) blood: Option<String>,
   /// when type is struct, this may be true to
   /// indicate this can be returned be a function
-  pub(crate) is_return_type: bool
+  pub(crate) is_return_type: bool,
 }
 
 impl TLTokenGroup {
-  pub fn description_all (&self) -> Option<HashMap<String, String>>{ self.description_all.clone() }
-  pub fn description     (&self) -> Option<String>                 { self.description    .clone() }
-  pub fn name            (&self) -> String                         { self.name           .clone() }
-  pub fn arguments       (&self) -> Vec<TLTokenArgType>            { self.arguments      .clone() }
-  pub fn type_           (&self) -> TLTokenGroupType               { self.type_          .clone() }
-  pub fn blood           (&self) -> Option<String>                 { self.blood          .clone() }
-  pub fn is_return_type  (&self) -> bool                           { self.is_return_type .clone() }
+  pub fn description_all(&self) -> Option<HashMap<String, String>> {
+    self.description_all.clone()
+  }
+  pub fn description(&self) -> Option<String> {
+    self.description.clone()
+  }
+  pub fn name(&self) -> String {
+    self.name.clone()
+  }
+  pub fn arguments(&self) -> Vec<TLTokenArgType> {
+    self.arguments.clone()
+  }
+  pub fn type_(&self) -> TLTokenGroupType {
+    self.type_.clone()
+  }
+  pub fn blood(&self) -> Option<String> {
+    self.blood.clone()
+  }
+  pub fn is_return_type(&self) -> bool {
+    self.is_return_type
+  }
 }
 
 impl TLTokenArgType {
-  pub fn sign_name   (&self) -> String                     { self.sign_name  .clone() }
-  pub fn sign_type   (&self) -> String                     { self.sign_type  .clone() }
-  pub fn description (&self) -> Option<String>             { self.description.clone() }
-  pub fn components  (&self) -> Vec<TLTokenComponentType>  { self.components .clone() }
+  pub fn sign_name(&self) -> String {
+    self.sign_name.clone()
+  }
+  pub fn sign_type(&self) -> String {
+    self.sign_type.clone()
+  }
+  pub fn description(&self) -> Option<String> {
+    self.description.clone()
+  }
+  pub fn components(&self) -> Vec<TLTokenComponentType> {
+    self.components.clone()
+  }
 }
 
 impl TLTokenComponentType {
-  pub fn sign_type   (&self) -> String                     { self.sign_type  .clone() }
-  pub fn components  (&self) -> Vec<TLTokenComponentType>  { self.components .clone() }
+  pub fn sign_type(&self) -> String {
+    self.sign_type.clone()
+  }
+  pub fn components(&self) -> Vec<TLTokenComponentType> {
+    self.components.clone()
+  }
 }
-
-
-
-
-
