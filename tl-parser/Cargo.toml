@@ -19,7 +19,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
-anyhow = "1"
-log = "0.4"
-serde = { version = "1", features = ["derive"] }
-typed-builder = "0.21"
+anyhow = "1.0.104"
+log = "0.4.35"
+serde = { version = "1.0.229", features = ["derive"] }
+typed-builder = "0.21.2"
